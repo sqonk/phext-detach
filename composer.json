@@ -20,5 +20,5 @@
 			"sqonk\\phext\\detach\\": "src/"
 		},
 		"files": ["src/global_functions.php"]
-    },
+    }
 }
