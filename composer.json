@@ -5,7 +5,7 @@
     "require": {
 		"php": "^7.3",
 		"ext-pcntl": "*",
-        "sqonk/phext-core": "*"
+        "sqonk/phext-core": "0.3.2"
     },
 	"keywords": ["pcntl","parallel","multitasking","threading"],
     "license": "MIT",
