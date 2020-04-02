@@ -1,0 +1,24 @@
+{
+    "name": "sqonk/phext-detach",
+    "description": "Detach is a library for running tasks inside of a PHP script in parallel using forked processes.",
+    "type": "library",
+    "require": {
+		"php": "^7.3",
+		"ext-pcntl": "*",
+        "sqonk/phext-core": "*"
+    },
+	"keywords": ["pcntl","parallel","multitasking","threading"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Theo Howell",
+            "email": "sqonk@sqonk.com.au"
+        }
+    ],
+	"autoload": {
+        "psr-4": {
+			"sqonk\\phext\\detach\\": "src/"
+		},
+		"files": ["src/global_functions.php"]
+    },
+}
