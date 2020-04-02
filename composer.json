@@ -16,9 +16,11 @@
         }
     ],
 	"autoload": {
-        "psr-0": {
-			"detach\\": "src/"
-		},
-		"files": ["src/global_functions.php"]
+		"files": [
+			"src/Task.class.php", 
+			"src/Dispatcher.class.php", 
+			"src/Channel.class.php", 
+			"src/global_functions.php"
+		]
     }
 }
