@@ -16,8 +16,8 @@
         }
     ],
 	"autoload": {
-        "psr-4": {
-			"sqonk\\phext\\detach\\": "src/"
+        "psr-0": {
+			"detach\\": "src/"
 		},
 		"files": ["src/global_functions.php"]
     }
