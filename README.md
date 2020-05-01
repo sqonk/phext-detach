@@ -24,7 +24,7 @@ PHEXT aims to not only be useful on the web SAPI but to also provide a productiv
 Via Composer
 
 ``` bash
-$ composer require sqonk\phext-detach
+$ composer require sqonk/phext-detach
 ```
 
 ## Documentation
