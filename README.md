@@ -40,79 +40,159 @@ Available Methods
 
 These global methods act as convienience API to the Dispatcher and save having to import namespaces.
 
+
+
+##### detach
+
 ```php
-/*
-    Execute the provided callback on a seperate process.
-
-    Each call creates a Task, which is a spawned
-    subprocess that operates independently of the original process.
-
-    It is useful for environnments that need to run a block of code
-    in parallel.
-
-    @param $callback    The method to be called from the detached task.
-    @param $data        Any parameters to be passed to the callback method.
-
-    @returns            The newly created and started task.
-*/
-function detach($callback, array $args = []);
-
-/* 
-    Wait for one or more currently running tasks to complete.
-
-    This method will accept a single task or an array of tasks. If 
-    nothing is passed in then it will wait for all currently 
-    running tasks to finish.
-
-    Returns the result of the task or an array of results depending
-    on how many tasks are being waited on.
-*/
-function detach_wait(sqonk\phext\detach\Task $task = null);
+function detach($callback, array $args = [])
 ```
+
+Execute the provided callback on a seperate process.
+
+Each call creates a Task, which is a spawned subprocess that operates independently of the original process.
+
+It is useful for environments that need to run a block of code in parallel.
+
+`$callback`: The method to be called from the detached task.
+
+`$data`: Any parameters to be passed to the callback method.
+
+Returns the newly created and started task.
+
+
+
+##### detach_wait
+
+```php
+function detach_wait(sqonk\phext\detach\Task $task = null)
+```
+
+Wait for one or more currently running tasks to complete.
+
+This method will accept a single task or an array of tasks. If nothing is passed in then it will wait for all currently running tasks to finish.
+
+Returns the result of the task or an array of results depending on how many tasks are being waited on.
+
+
 
 ### Dispatcher
 
 Dispatcher is the primary class that deals with spawning and monitoring of subtasks.
 
 ```php
-/*
-    Execute the provided callback on a seperate process.
-
-    Each call creates a Task, which is a spawned
-    subprocess that operates independently of the original process.
-
-    It is useful for environnments that need to run a block of code
-    in parallel.
-
-    @param $callback    The method to be called from the detached task.
-    @param $data        Any parameters to be passed to the callback method.
-
-    @returns            The newly created and started task.
-*/
-dispatcher::detach($callback, array $args = []);
-
-/* 
-    Wait for one or more currently running tasks to complete.
-
-    This method will accept a single task or an array of tasks. If 
-    nothing is passed in then it will wait for all currently 
-    running tasks to finish.
-
-    Returns the result of the task or an array of results depending
-    on how many tasks are being waited on.
-*/
-dispatcher::wait($tasks = null);
-
-/* 
-    Wait for at least one task (out of many) to complete.
-
-    If nothing is passed in then it will use the set of currently 
-    running tasks.
-
-    Returns the result of the first task in the array to finish.
-*/
-dispatcher::wait_any(?array $tasks = null);
+use \sqonk\phext\detach\Dispatcher;
 ```
+
+
+
+##### detach
+
+```php
+static public function detach($callback, array $args = [])
+```
+
+Execute the provided callback on a seperate process.
+
+Each call creates a Task, which is a spawned subprocess that operates independently of the original process.
+
+It is useful for environnments that need to run a block of code in parallel.
+
+`$callback`: The method to be called from the detached task.
+
+`$data`: Any parameters to be passed to the callback method.
+
+Returns the newly created and started task.
+
+
+
+##### wait
+
+```php
+static public function wait($tasks = null)
+```
+
+Wait for one or more currently running tasks to complete.
+
+This method will accept a single task or an array of tasks. If nothing is passed in then it will wait for all currently running tasks to finish.
+
+Returns the result of the task or an array of results depending on how many tasks are being waited on.
+
+
+
+##### wait_any
+
+```php
+static public function wait_any(?array $tasks = null)
+```
+
+Wait for at least one task (out of many) to complete.
+
+If nothing is passed in then it will use the set of currently running tasks.
+
+Returns the result of the first task in the array to finish.
+
+
+
+### Channel
+
+Channel is a loose implentation of channels from the go language. They provide a simple way of allowing independant processes to send and receive data between one another. 
+
+By default reading from the channel will block and in this fashion it can be used as a logic gate for controlling the execution of various tasks by forcing them to wait for incoming data where required.
+
+```php
+use \sqonk\phext\detach\Channel;
+
+$chan = new Channel;
+```
+
+
+
+##### capacity
+
+```php
+public function capacity(int $totalDeposits)
+```
+
+Set an arbitrary limit on the number of times data will be ready from the channel. Once the limit has been reached all subsequent reads will return FALSE.
+
+Every time this method is called it will reset the *read* count to 0.
+
+
+
+##### set / put
+
+```php
+public function set($value)
+```
+
+```php
+public function put($value) // alias
+```
+
+Queue a value onto the channel, causing all readers to wake up.
+
+
+
+##### get / next
+
+```php
+public function get(bool $wait = true, bool $removeAfterRead = true) 
+```
+
+```php
+public function next(bool $wait = true, bool $removeAfterRead = true) // next
+```
+
+Obtain the next value on the queue (if any). If `$wait` is `TRUE` then this method will block until a new value is received. Be aware that in this mode the method will block forever if no further values are queued from other tasks.
+
+If `$removeAfterRead` is `TRUE` then the value will be removed from the queue at the same time it is read.
+
+If the read capacity of the channel is set and has been exceeded then this method will return `FALSE` immediately.
+
+`$wait` and `$removeAfterRead` default to `TRUE`.
+
+
 
 ## Examples
 
@@ -193,7 +273,7 @@ while (! $t->complete())
 println('task complete, result is', $t->result());
 // will print out the data returned from the task, which is '2' in this example.
 ```
- 
+
 ## Credits
 
 Theo Howell
