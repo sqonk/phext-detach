@@ -32,6 +32,7 @@ Method/Class Index
 
 - [Global Methods](#global-methods)
 - [Dispatcher](#dispatcher)
+- [Channel](#channel)
 
 Available Methods
 -----------------
