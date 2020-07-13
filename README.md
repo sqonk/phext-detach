@@ -203,13 +203,13 @@ Basic usage with an anonymous function as a callback that returns the result to 
 // generate 10 seperate tasks, all of which return a random number.
 foreach (range(1, 10) as $i)
   detach (function() use ($i) {
-      usleep(rand(1000, 100000));
-      return [$i, rand(1, 4)];
+    usleep(rand(1000, 100000));
+  	return [$i, rand(1, 4)];
   });
 
 // wait for all tasks to complete and then print each result.	
 foreach (detach_wait() as [$i, $rand])
-    println("$i random number was $rand");	
+	println("$i random number was $rand");	
 ```
 
 This example illustrates the use of Channels to control flow between the parent and two sub-tasks. 
@@ -263,7 +263,7 @@ class MyTask extends Task
   {
   	// ... your custom task code here.
 
-  	return 2; // Your task can return anything that can be serialised (or nothing). 
+    return 2; // Your task can return anything that can be serialised (or nothing). 
   }
 }
 
