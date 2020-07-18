@@ -107,6 +107,28 @@ Returns the newly created and started task.
 
 
 
+##### map
+
+```php
+static public function map(iterable $data, callable $callback, array $options = [])
+```
+
+Map an array of items to be processed each on a seperate task.  The receiving callback function should take at least one parameter.
+
+`$data`: An optional array of additional parameters that will be passed to all tasks, behind the individual item in the data array.
+
+`$callback`: The method to be called from a seperate task.
+
+`$options`: Associative array of various configurable options which include:
+
+	- `$constants`: If you would rather stream the results directly to a universal channel then you can use this parameter to force the method to  return immediately where you can control the resulting worker pool directly.
+	- `$block`: An optional array of additional parameters that will be passed  to all tasks, behind the individual item in the data array.
+	- `$limit`: Set a limit on the number of tasks that are allowed to run simultaneously. Leaving out this value, or setting it to a value less than 1, will automatically create as many tasks as there are items in the data array.
+
+When blocking: return an array of result data from the worker threads if your callback method returns any. When not blocking: returns nothing. 
+
+
+
 ##### wait
 
 ```php
@@ -211,6 +233,43 @@ foreach (range(1, 10) as $i)
 foreach (detach_wait() as [$i, $rand])
 	println("$i random number was $rand");	
 ```
+
+The same example but with the use `map`
+
+```php
+use sqonk\phext\detach\Dispatcher as dispatch;
+
+// generate 10 seperate tasks, all of which return a random number.
+$r = dispatch::map(range(1, 10), function($i) {
+	usleep(rand(1000, 100000));
+	return [$i, rand(1, 4)];
+});
+
+// wait for all tasks to complete and then print each result.	
+foreach ($r as [$i, $rand])
+	println("$i random number was $rand");	
+```
+
+.. or a more complex version using non-blocking and a pool limit of 3.
+
+```php
+use sqonk\phext\detach\Dispatcher as dispatch;
+use sqonk\phext\detach\Channel;
+
+// generate 10 seperate tasks, all of which return a random number.
+$chan = new Channel;
+$chan->capacity(10);
+dispatch::map(range(1, 10), function($i, $chan) {
+    usleep(rand(1000, 100000));
+  	$chan->put(rand(1, 4));
+}, ['limit' => 3, 'block' => false, 'constants' => [$chan]]);
+
+// wait for all tasks to complete and then print each result.	
+while ($r = $chan->get())
+	println("random number was $r");	
+```
+
+
 
 This example illustrates the use of Channels to control flow between the parent and two sub-tasks. 
 
