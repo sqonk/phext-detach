@@ -258,7 +258,7 @@ use sqonk\phext\detach\Channel;
 
 // generate 10 seperate tasks, all of which return a random number.
 $chan = new Channel;
-$chan->capacity(10);
+$chan->capacity(10); // we'll be waiting on a maximum of 10 inputs.
 dispatch::map(range(1, 10), function($i, $chan) {
     usleep(rand(1000, 100000));
   	$chan->put(rand(1, 4));
