@@ -49,6 +49,53 @@ class Dispatcher
         return $t;
     }
     
+    static public function map(iterable $data, callable $callback, array $options = [])
+    {
+        $block = arrays::safe_value($options, 'block', true);
+        $constantParams = arrays::safe_value($options, 'constants', null);
+        $poolLimit = arrays::safe_value($options, 'limit', 0);
+        
+        if ($poolLimit > 0)
+        {
+            $chan = $block ? new Channel : null;
+            self::detach(function() use ($data, $callback, $constantParams, $poolLimit, $chan) 
+            {
+                $tasks = [];
+                foreach ($data as $item)
+                {
+                    $params = is_array($item) ? $item : [$item];
+                    if ($constantParams)
+                        $params = array_merge($params, $constantParams);
+            
+                    $tasks[] = self::detach($callback, $params);    
+                    if (count($tasks) >= $poolLimit)   
+                        self::wait_any($tasks);        
+                }
+                if ($chan) {
+                    $r = self::wait($tasks);
+                    $chan->put($r);
+                }
+            });
+            if ($chan)
+                return $chan->get();
+        }
+        else
+        {
+            $tasks = [];
+            foreach ($data as $item)
+            {
+                $params = is_array($item) ? $item : [$item];
+                if ($constantParams)
+                    $params = array_merge($params, $constantParams);
+            
+                $tasks[] = self::detach($callback, $params);               
+            }
+            
+            if ($block)
+                return self::wait($tasks);
+        }
+    }
+    
     static private function cleanup()
     {
 		$keys = array_keys(self::$threads);
