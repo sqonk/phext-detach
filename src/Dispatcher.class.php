@@ -52,75 +52,13 @@ class Dispatcher
     /*
         Map an array of items to be processed each on a seperate task.
         The receiving callback function should take at least one parameter.
-    
-        @param $data            The array of items to be processed.
-        @param $callback        The method to be called from a seperate task.
-        @param $options         Associative array of various configurable options which include:
-              
-              constants: array  An optional array of additional parameters that will be passed 
-                                to all tasks, behind the individual item in the data array.
-                                
-              block: bool       If you would rather stream the results directly to a universal 
-                                channel then you can use this parameter to force the method to 
-                                return immediately where you can control the resulting worker 
-                                pool directly.
-    
-              limit: int        Set a limit on the number of tasks that are allowed to run 
-                                simultaneously. Leaving out this value, or setting it to a 
-                                value less than 1, will automatically create as many tasks 
-                                as there are items in the data array.
-    
-    
-        @returns mixed          When blocking: An array of result data from the worker threads 
-                                if your callback method returns any. When not blocking: returns
-                                the pool that the threads are running on. 
-                            
-    */
-    static public function map(iterable $data, callable $callback, array $options = [])
-    {
-        $block = arrays::safe_value($options, 'block', true);
-        $constantParams = arrays::safe_value($options, 'constants', null);
-        $poolLimit = arrays::safe_value($options, 'limit', 0);
         
-        if ($poolLimit > 0)
-        {
-            $chan = $block ? new Channel : null;
-            self::detach(function() use ($data, $callback, $constantParams, $poolLimit, $chan) 
-            {
-                $tasks = [];
-                foreach ($data as $item)
-                {
-                    $params = is_array($item) ? $item : [$item];
-                    if ($constantParams)
-                        $params = array_merge($params, $constantParams);
-            
-                    $tasks[] = self::detach($callback, $params);    
-                    if (count($tasks) >= $poolLimit)   
-                        self::wait_any($tasks);        
-                }
-                if ($chan) {
-                    $r = self::wait($tasks);
-                    $chan->put($r);
-                }
-            });
-            if ($chan)
-                return $chan->get();
-        }
-        else
-        {
-            $tasks = [];
-            foreach ($data as $item)
-            {
-                $params = is_array($item) ? $item : [$item];
-                if ($constantParams)
-                    $params = array_merge($params, $constantParams);
-            
-                $tasks[] = self::detach($callback, $params);               
-            }
-            
-            if ($block)
-                return self::wait($tasks);
-        }
+        This method returns a TaskMap object that can be further configured.
+        See TaskMap class for more options.
+    */
+    static public function map(iterable $data, callable $callback)
+    {
+        return new TaskMap($data, $callback);
     }
     
     static private function cleanup()

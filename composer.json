@@ -18,9 +18,12 @@
 	"autoload": {
 		"files": [
 			"src/Task.class.php", 
+            "src/TaskMap.class.php", 
 			"src/Dispatcher.class.php", 
 			"src/Channel.class.php", 
 			"src/global_functions.php"
 		]
+    },
+    "require-dev": {
     }
 }
