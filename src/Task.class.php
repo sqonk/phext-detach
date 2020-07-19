@@ -208,16 +208,23 @@ class Task
 	// Main entry point of the child process.
 	protected function run(...$arguments)
 	{
-        if (is_string($this->callback))
-        {
-            if (! empty($arguments)) 
-                $resp = call_user_func_array($this->callback, $arguments);
+        $resp = null;
+        try {
+            if (is_string($this->callback))
+            {
+                if (! empty($arguments)) 
+                    $resp = call_user_func_array($this->callback, $arguments);
             
+                else 
+                    $resp = call_user_func($this->callback);
+            }
             else 
-                $resp = call_user_func($this->callback);
+                $resp = ($this->callback)(...$arguments);
         }
-        else 
-            $resp = ($this->callback)(...$arguments);
+        catch (\Throwable $err) {
+            println($err->getMessage());
+            println($err->getTraceAsString());
+        }
         
 		return $resp;
 	}
