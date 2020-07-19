@@ -73,7 +73,7 @@ class TaskMap
         return $this;
     }
     
-    // Begin the task
+    // Begin the task map.
     public function start()
     {
         if ($this->limit > 0)

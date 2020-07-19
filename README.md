@@ -33,6 +33,8 @@ Method/Class Index
 - [Global Methods](#global-methods)
 - [Dispatcher](#dispatcher)
 - [Channel](#channel)
+- [TaskMap](#taskmap)
+- [Examples](#examples)
 
 Available Methods
 -----------------
@@ -115,17 +117,7 @@ static public function map(iterable $data, callable $callback, array $options = 
 
 Map an array of items to be processed each on a seperate task.  The receiving callback function should take at least one parameter.
 
-`$data`: An optional array of additional parameters that will be passed to all tasks, behind the individual item in the data array.
-
-`$callback`: The method to be called from a seperate task.
-
-`$options`: Associative array of various configurable options which include:
-
-	- `$constants`: If you would rather stream the results directly to a universal channel then you can use this parameter to force the method to  return immediately where you can control the resulting worker pool directly.
-	- `$block`: An optional array of additional parameters that will be passed  to all tasks, behind the individual item in the data array.
-	- `$limit`: Set a limit on the number of tasks that are allowed to run simultaneously. Leaving out this value, or setting it to a value less than 1, will automatically create as many tasks as there are items in the data array.
-
-When blocking: return an array of result data from the worker threads if your callback method returns any. When not blocking: returns nothing. 
+This method returns a TaskMap object that can be further configured. See [TaskMap](#taskmap) class for more options.
 
 
 
@@ -217,6 +209,69 @@ If the read capacity of the channel is set and has been exceeded then this metho
 
 
 
+### TaskMap
+
+The TaskMap class maps an array of elements each unto their own seperate task. A TaskMap can be created by either direct class instantiation or the [Dispatcher](#dispatcher) interface.
+
+```php
+use sqonk\phext\detach\Dispatcher as dispatch;
+
+$array = []; // ... your data array.
+$map = dispatch::map($array, 'myCallBack');
+
+```
+
+```php
+use sqonk\phext\detach\TaskMap;
+
+$array = []; // ... your data array.
+$map = new TaskMap($array, 'myCallBack')
+```
+
+
+
+##### block
+
+```php
+public function block(bool $waitForCompletion) : TaskMap
+```
+
+Set whether the main program will block execution until all tasks have completed. The default is TRUE.
+
+
+
+##### params
+
+```php
+public function params(...$args) : TaskMap
+```
+
+A provide a series of auxiliary parameters that are provided to the callback  in addition to the main element passed in.
+
+
+
+##### limit
+
+```php
+public function limit(int $limit) : TaskMap
+```
+
+Set the maximum number of tasks that may run concurrently. If the number is below 1 then no limit is applied and as many tasks as there are elements in the data array will be created spawned.
+
+The default is 0.
+
+
+
+##### start
+
+```php
+public function start()
+```
+
+Begin execution of the tasks.
+
+
+
 ## Examples
 
 Basic usage with an anonymous function as a callback that returns the result to the parent task.
@@ -243,7 +298,7 @@ use sqonk\phext\detach\Dispatcher as dispatch;
 $r = dispatch::map(range(1, 10), function($i) {
 	usleep(rand(1000, 100000));
 	return [$i, rand(1, 4)];
-});
+})->start();
 
 // wait for all tasks to complete and then print each result.	
 foreach ($r as [$i, $rand])
@@ -259,14 +314,17 @@ use sqonk\phext\detach\Channel;
 // generate 10 seperate tasks, all of which return a random number.
 $chan = new Channel;
 $chan->capacity(10); // we'll be waiting on a maximum of 10 inputs.
-dispatch::map(range(1, 10), function($i, $chan) {
-    usleep(rand(1000, 100000));
-  	$chan->put(rand(1, 4));
-}, ['limit' => 3, 'block' => false, 'constants' => [$chan]]);
+
+$cb = function($i, $chan) {
+  usleep(rand(1000, 100000));
+	$chan->put(rand(1, 4));
+};
+
+dispatch::map(range(1, 10), $cb)->limit(3)->block(false)->params($chan)->start();
 
 // wait for all tasks to complete and then print each result.	
-while ($r = $chan->get())
-	println("random number was $r");	
+while ($r = $chan->get() and $r != TASK_CHANNEL_NO_DATA)
+	println("result: $r");
 ```
 
 
