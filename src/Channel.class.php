@@ -81,18 +81,34 @@ class Channel
 	
 		If the read capacity of the channel is set and has been exceeded then
 		this method will return FALSE immediately.
+    
+        If $wait is given as an integer of 1 or more then it is used as a timeout
+        in seconds. In such a case, if nothing is received before the timeout then 
+        a value of TASK_CHANNEL_NO_DATA will be returned if nothing is received 
+        prior to the expiry.
 	
 		$wait and $removeAfterRead default to TRUE.
+    
+        $waitTimeout defaults to 0 (never expire).
 	*/
-    public function get(bool $wait = true, bool $removeAfterRead = true) 
+    public function get($wait = true, bool $removeAfterRead = true) 
     {
 		if ($this->capacity !== null and $this->readCount >= $this->capacity)
 			return false;
 		
 		$value = TASK_CHANNEL_NO_DATA;
+        $started = time();
+        $waitTimeout = 0; 
+        if (is_int($wait)) {
+            $waitTimeout = $wait;
+            $wait = true;
+        }
 		
 		while (true)
 		{
+            if ($waitTimeout > 0 and time()-$started >= $waitTimeout)
+                break;
+
 			if ($queued = arrays::first(glob(sys_get_temp_dir()."/{$this->commID}*"))) 
 			{
 				$value = unserialize(@file_get_contents($queued));
@@ -112,7 +128,7 @@ class Channel
     }
 	
 	// Alias for Channel::get().
-	public function next(bool $wait = true, bool $removeAfterRead = true)
+	public function next($wait = true, bool $removeAfterRead = true)
 	{
 		return $this->get($wait, $removeAfterRead);
 	}
