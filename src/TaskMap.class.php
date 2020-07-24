@@ -78,10 +78,9 @@ class TaskMap
     {
         if ($this->limit > 0)
         {
-            $chan = $this->block ? new Channel : null;
+            $chan = $this->block ? new BufferedChannel : null;
             return Dispatcher::detach(function() use ($chan)
             {
-                println('starting pool');
                 $tasks = [];
                 foreach ($this->data as $item)
                 {

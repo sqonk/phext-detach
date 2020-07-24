@@ -5,7 +5,8 @@
     "require": {
 		"php": "^7.3",
 		"ext-pcntl": "*",
-        "sqonk/phext-core": "^0.3.2"
+        "sqonk/phext-core": "^0.3.2",
+        "php-defer/php-defer": "^5.0"
     },
 	"keywords": ["pcntl","parallel","multitasking","threading"],
     "license": "MIT",
@@ -21,6 +22,7 @@
             "src/TaskMap.class.php", 
 			"src/Dispatcher.class.php", 
 			"src/Channel.class.php", 
+            "src/BufferedChannel.class.php", 
 			"src/global_functions.php"
 		]
     },

@@ -58,6 +58,8 @@ class Task
 	public function __destruct()
 	{
 		$this->cleanup();
+        if ($this->pid)
+            $this->stop();
 	}
 	
 	// clean up any communication channels associated with the process.
