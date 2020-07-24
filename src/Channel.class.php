@@ -37,34 +37,10 @@ class Channel
     
 	public function __construct()
 	{
-        $id = hexdec(uniqid());
-        $this->key = $id;
-		$this->sem_id = sem_get(ftok(__FILE__, 'l'));
-        $this->shm_id = ftok(__FILE__, 't');
-        $this->sig_id = ftok(__FILE__, 's');
-        
-        $this->_signal(self::STATE_READ);
-        // $sval = serialize(0);
-//         $fh = @shmop_open($this->shm_id, 'c', 0775, strlen($sval));
-//         shmop_write($fh, $sval, 0);
-//         shmop_delete($fh);
-//         shmop_close($fh);
+        $this->key = "CHANID-".uniqid();
+        $this->sem_id = sem_get(ftok(__FILE__, 'l'));
 	}
 
-    protected function _signal($on)
-    {
-        $fh = shmop_open($this->sig_id, 'c', 0775, 1);
-        shmop_write($fh, (string)$on, 0);
-        shmop_close($fh);
-    }
-    
-    protected function _state()
-    {
-        $fh = shmop_open($this->sig_id, 'a', 0, 0);
-        $state = shmop_read($fh, 0, 0);
-        shmop_close($fh);
-        return $state;
-    }
 		
     /* 
 		Pass a value into the channel. This method will block until the 
@@ -80,49 +56,36 @@ class Channel
             - Write out new data.
             - Release lock, then wait until some other task has read & deleted the value.
         */
-        $sval = serialize($value);
         while (true)
         {
             if (sem_acquire($this->sem_id))
             {
                 try {
-                    if ($this->_state() == self::STATE_READ)
+                    if (! apcu_exists($this->key))
                     {
-                        $fh = @shmop_open($this->shm_id, 'c', 0775, strlen($sval));
-                        shmop_write($fh, $sval, 0);
-                        @shmop_close($fh);
-                        $this->_signal(self::STATE_WRITTEN);
+                        println("write $value");
+                        if (! apcu_store($this->key, $value))
+                            println("failed to write");
                         break;
                     }
                 }
                 finally {
                      if (! sem_release($this->sem_id))
                         dump_stack("## WARNING: Failed to release lock for {$this->key}");
-                }
+                } println("wait write");
+                
                 usleep(TASK_WAIT_TIME); // wait until existing as been deleted.
             }
             else
                 dump_stack("## WARNING: Failed to aquire lock for {$this->key}, write failed.");
         }
         
-        
-        /* 
-            Wait for the value to be read by something else.
-        */
-        $state = -1;
-        while ($state !== self::STATE_READ)
-        {
-            if (sem_acquire($this->sem_id)) {
-                 $state = $this->_state();
-                 if (! sem_release($this->sem_id))
-                     dump_stack("## WARNING: Failed to release lock for {$this->key}");
-            }
-               
-            else
-                println("## WARNING: Failed to aquire lock for {$this->key}, write failed.");
-            
+        // Wait for the value to be read by something else.
+        while (apcu_exists($this->key)) {
+            println("wait write end");
             usleep(TASK_WAIT_TIME); // wait until existing as been deleted.    
         }
+            
 
         return $this;
     }
@@ -171,17 +134,15 @@ class Channel
             if (sem_acquire($this->sem_id, ! $wait))
             {
                 try {
-                    if ($this->_state() == self::STATE_WRITTEN)
+                    if (apcu_exists($this->key))
                     {
-                        $fh = @shmop_open($this->shm_id, 'a', 0, 0);
-                        $value = unserialize(shmop_read($fh, 0, 0));
-                        @shmop_close($fh);
-                        $this->_signal(self::STATE_READ);
-                            
+                        $value = apcu_fetch($this->key); println("read $value");
+                        apcu_delete($this->key);    
                         break;
                     }
         			else if (! $wait)
         				break;
+                    println("wait read");
                 }
                 finally {
                     if (! sem_release($this->sem_id))
