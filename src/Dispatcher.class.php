@@ -131,7 +131,7 @@ class Dispatcher
             usleep(TASK_WAIT_TIME);
             foreach ($tasks as $t)
                 if ($t->complete()) 
-                    return $t->result();
+                    return $t->result(); 
         }
 	}
 }

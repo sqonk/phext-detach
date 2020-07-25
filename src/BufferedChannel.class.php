@@ -68,7 +68,7 @@ class BufferedChannel
 		Queue a value onto the channel, causing all readers to wake up.
 	*/
     public function set($value) 
-    {
+    { 
         /*
             Rules:
             - Require lock.
@@ -151,26 +151,29 @@ class BufferedChannel
                     if (file_exists($this->filepath))
                     {
                         $size = filesize($this->filepath);
-                        $fh = fopen($this->filepath, 'r+');
-                        flock($fh, LOCK_EX);
-                        $contents = fread($fh, $size);
-                        $boundpos = strpos($contents, self::BOUNDARY);
-                        $value = substr($contents, 0, $boundpos);
-                        $contents = substr($contents, $boundpos + strlen(self::BOUNDARY));
-                        
-                        $len = strlen($contents);
-                        if ($len > 0)
+                        if ($size > 0)
                         {
-                            rewind($fh);
-                            fwrite($fh, $contents);
-                            ftruncate($fh, $len);
-                        }
-                        else
-                            $delete = true;
+                            $fh = fopen($this->filepath, 'r+');
+                            flock($fh, LOCK_EX);
+                            $contents = fread($fh, $size);
+                            $boundpos = strpos($contents, self::BOUNDARY);
+                            $value = substr($contents, 0, $boundpos);
+                            $contents = substr($contents, $boundpos + strlen(self::BOUNDARY));
                         
-                        $value = unserialize($value);
-                        $this->readCount++; 
-                        break;
+                            $len = strlen($contents);
+                            if ($len > 0)
+                            {
+                                rewind($fh);
+                                fwrite($fh, $contents);
+                                ftruncate($fh, $len);
+                            }
+                            else
+                                $delete = true;
+                        
+                            $value = unserialize($value);
+                            $this->readCount++; 
+                            break;
+                        }
                     }
                 }
                 finally {

@@ -19,6 +19,8 @@ namespace sqonk\phext\detach;
 * permissions and limitations under the License.
 */
 
+use sqonk\phext\core\arrays;
+
 /*
     The TaskMap class maps an array of elements each unto their own
     seperate task.
@@ -73,32 +75,42 @@ class TaskMap
         return $this;
     }
     
+    static private function cleanup($tasks)
+    {
+        foreach ($tasks as $i => $task)
+        {
+            if ($task->complete() and ! $task->unread()) 
+                $tasks[$i] = null;
+        }
+        return arrays::compact($tasks);
+    }
+    
     // Begin the task map.
     public function start()
     {
         if ($this->limit > 0)
         {
-            $chan = $this->block ? new BufferedChannel : null;
-            return Dispatcher::detach(function() use ($chan)
+            return Dispatcher::detach(function()
             {
+                $results = $this->block ? [] : null;
                 $tasks = [];
-                foreach ($this->data as $item)
+                foreach ($this->data as $i => $item)
                 {
-                    $params = is_array($item) ? $item : [$item];
+                    $params = [$item];
                     if ($this->params)
                         $params = array_merge($params, $this->params);
                     
                     $tasks[] = Dispatcher::detach($this->callback, $params);  
-                    if ($chan) {
-                        $chan->put(Dispatcher::wait($tasks));
-                    }  
                     
-                    if (count($tasks) >= $this->limit)   
-                        Dispatcher::wait_any($tasks);        
+                    $cnt = count($tasks);
+                    if ($cnt >= $this->limit) {
+                        $r = Dispatcher::wait_any($tasks);  
+                        if ($r and $results)
+                            $results[] = $r;
+                        $tasks = self::cleanup($tasks);
+                    } 
                 }
-                
-                if ($chan)
-                    return $chan->get();
+                return $results ? array_merge($results, Dispatcher::wait(self::cleanup($tasks))) : null;
             }); 
         }
         else
