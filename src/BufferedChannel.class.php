@@ -27,13 +27,15 @@ namespace sqonk\phext\detach;
 	as a logic gate for controlling the execution of various tasks by forcing them to 
 	wait for incoming data where required.
 */
-use sqonk\phext\core\arrays;
+use sqonk\phext\core\strings;
 
 class BufferedChannel
 {
 	protected $commID; // unique key for data storage of the channel. 
 	protected $capacity;
 	protected $readCount = 0;
+    
+    const BOUNDARY = "#___CHANITEMBOUNDARY___#";
     
     static private $storeLoc;
 				
@@ -43,7 +45,9 @@ class BufferedChannel
             if (! self::$storeLoc = sys_get_temp_dir())
                 self::$storeLoc = __DIR__.'/.tmp';
         }
-		$this->commID = 'BCHAN-'.uniqid(true);
+		$this->key = 'BCHAN-'.uniqid();
+        $this->filepath = self::$storeLoc."/{$this->key}";
+        $this->sem_id = sem_get(ftok(__FILE__, 'l'));
 	}
 	
 	/*
@@ -59,32 +63,42 @@ class BufferedChannel
 		$this->readCount = 0;
         return $this;
 	}
-	protected $wcount = 0;
+	
     /* 
 		Queue a value onto the channel, causing all readers to wake up.
 	*/
     public function set($value) 
     {
         /*
-            Here we prevent race conditions where another task/process
-            starts reading from the file just after file_put_contents
-            has created it but before anything has actually been written.
-        
-            To do so we output to a private file and rename it once complete.
+            Rules:
+            - Require lock.
+            - Append new data.
+            - Release lock.
         */
-        $final = sprintf("%s/%s-%s", self::$storeLoc, $this->commID, uniqid());
-        $atomic = sprintf("%s/%s", self::$storeLoc, uniqid());
-        
-        while (true) {
-            if (file_put_contents($atomic, serialize($value), LOCK_EX) !== false) {
-                if (rename($atomic, $final))
+        while (true)
+        {
+            if (sem_acquire($this->sem_id))
+            {
+                try {
+                    $fh = fopen($this->filepath, 'a');
+                    flock($fh, LOCK_EX);
+                    fwrite($fh, serialize($value).self::BOUNDARY);
+                    
                     break;
-                println('failed rename', $atomic, $final);
+                }
+                finally {
+                    if (isset($fh)) {
+                        flock($fh, LOCK_UN);
+                        fclose($fh);
+                    }
+                     if (! sem_release($this->sem_id))
+                        dump_stack("## WARNING: Failed to release lock for {$this->key}");
+                } 
+                
+                usleep(TASK_WAIT_TIME); // wait until existing as been deleted.
             }
             else
-                println('failed write');
-            
-            usleep(TASK_WAIT_TIME); 
+                dump_stack("## WARNING: Failed to aquire lock for {$this->key}, write failed.");
         }
                 
         return $this;
@@ -102,9 +116,6 @@ class BufferedChannel
 		in this mode the method will block forever if no further values
 		are queued from other tasks.
 	
-		If $removeAfterRead is TRUE then the value will be removed from the
-		queue at the same time it is read.
-	
 		If the read capacity of the channel is set and has been exceeded then
 		this method will return FALSE immediately.
     
@@ -113,11 +124,9 @@ class BufferedChannel
         a value of TASK_CHANNEL_NO_DATA will be returned if nothing is received 
         prior to the expiry.
 	
-		$wait and $removeAfterRead default to TRUE.
-    
-        $waitTimeout defaults to 0 (never expire).
+		$wait defaults to TRUE.    
 	*/
-    public function get($wait = true, bool $removeAfterRead = true) 
+    public function get($wait = true) 
     {
 		if ($this->capacity !== null and $this->readCount >= $this->capacity)
 			return false;
@@ -135,35 +144,58 @@ class BufferedChannel
             if ($waitTimeout > 0 and time()-$started >= $waitTimeout)
                 break;
             
-            $files = glob(self::$storeLoc."/{$this->commID}*");
-            foreach ($files as $queued)
+            if (sem_acquire($this->sem_id))
             {
-                if ($value = @file_get_contents($queued))
-                {
-                    $value = unserialize($value);
-                    println('value read, count', $this->readCount+1);
+                $delete = false;
+                try {
+                    if (file_exists($this->filepath))
+                    {
+                        $size = filesize($this->filepath);
+                        $fh = fopen($this->filepath, 'r+');
+                        flock($fh, LOCK_EX);
+                        $contents = fread($fh, $size);
+                        $boundpos = strpos($contents, self::BOUNDARY);
+                        $value = substr($contents, 0, $boundpos);
+                        $contents = substr($contents, $boundpos + strlen(self::BOUNDARY));
+                        
+                        $len = strlen($contents);
+                        if ($len > 0)
+                        {
+                            rewind($fh);
+                            fwrite($fh, $contents);
+                            ftruncate($fh, $len);
+                        }
+                        else
+                            $delete = true;
+                        
+                        $value = unserialize($value);
+                        $this->readCount++; 
+                        break;
+                    }
                 }
-                if ($removeAfterRead)
-					unlink($queued);    
-               
-				$this->readCount++; println('read count', $this->readCount);
-                
-                if ($value) 
-                    goto done;
+                finally {
+                    if (isset($fh) && is_resource($fh)) {
+                        flock($fh, LOCK_UN);
+                        fclose($fh);
+                    }
+                    if ($delete)
+                        unlink($this->filepath); // contents reduced to 0.
+                    sem_release($this->sem_id);
+                }    
             }
+            
 			if (! $wait)
 				break;
 			
 			usleep(TASK_WAIT_TIME); 
 		}
         
-        done:
         return $value;
     }
 	
 	// Alias for Channel::get().
-	public function next($wait = true, bool $removeAfterRead = true)
+	public function next($wait = true)
 	{
-		return $this->get($wait, $removeAfterRead);
+		return $this->get($wait);
 	}
 }

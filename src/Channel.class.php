@@ -32,12 +32,17 @@ define('TASK_CHANNEL_NO_DATA', '__data_none__');
 
 class Channel
 {
-    const STATE_READ = '0';
-    const STATE_WRITTEN = '1';
+    static private $storeLoc;
     
 	public function __construct()
 	{
+        if (! self::$storeLoc) {
+            if (! self::$storeLoc = sys_get_temp_dir())
+                self::$storeLoc = __DIR__.'/.tmp';
+        }
+        
         $this->key = "CHANID-".uniqid();
+        $this->filepath = self::$storeLoc."/{$this->key}";
         $this->sem_id = sem_get(ftok(__FILE__, 'l'));
 	}
 
@@ -61,18 +66,16 @@ class Channel
             if (sem_acquire($this->sem_id))
             {
                 try {
-                    if (! apcu_exists($this->key))
+                    if (! file_exists($this->filepath))
                     {
-                        println("write $value");
-                        if (! apcu_store($this->key, $value))
-                            println("failed to write");
+                        file_put_contents($this->filepath, serialize($value));
                         break;
                     }
                 }
                 finally {
                      if (! sem_release($this->sem_id))
                         dump_stack("## WARNING: Failed to release lock for {$this->key}");
-                } println("wait write");
+                } 
                 
                 usleep(TASK_WAIT_TIME); // wait until existing as been deleted.
             }
@@ -81,11 +84,9 @@ class Channel
         }
         
         // Wait for the value to be read by something else.
-        while (apcu_exists($this->key)) {
-            println("wait write end");
+        while (file_exists($this->filepath)) {
             usleep(TASK_WAIT_TIME); // wait until existing as been deleted.    
         }
-            
 
         return $this;
     }
@@ -134,15 +135,14 @@ class Channel
             if (sem_acquire($this->sem_id, ! $wait))
             {
                 try {
-                    if (apcu_exists($this->key))
+                    if (file_exists($this->filepath))
                     {
-                        $value = apcu_fetch($this->key); println("read $value");
-                        apcu_delete($this->key);    
+                        $value = unserialize(@file_get_contents($this->filepath));
+                        unlink($this->filepath);   
                         break;
                     }
         			else if (! $wait)
         				break;
-                    println("wait read");
                 }
                 finally {
                     if (! sem_release($this->sem_id))
