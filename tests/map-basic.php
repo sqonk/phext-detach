@@ -6,7 +6,7 @@ use sqonk\phext\detach\Dispatcher as dispatch;
 // generate 10 seperate tasks, all of which return a number.
 $input = range(1, 10);
 $r = dispatch::map($input, function($i) { println('run', $i);
-	usleep(rand(1000, 100000));
+	usleep(rand(100, 1000));
 	return [$i, $i];
 })->start();
 
