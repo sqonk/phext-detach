@@ -36,3 +36,5 @@ detach ('mul10', [$chan1, $chan2]);
 // wait for the final result that is output to the second channel, then print it.
 println($chan2->get());
 // will output 100.
+
+detach_wait(); // allow external tasks to complete and shutdown correctly.
