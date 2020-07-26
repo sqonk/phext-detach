@@ -90,8 +90,59 @@ class TaskMap
     {
         if ($this->limit > 0)
         {
-            return Dispatcher::detach(function()
+            if ($this->block)
             {
+                $tasks = [];
+                $results = []; $pids = [];
+                foreach ($this->data as $item)
+                {
+                    $params = is_array($item) ? $item : [$item];
+                    if ($this->params)
+                        $params = array_merge($params, $this->params);
+                    
+                    $tasks[] = Dispatcher::detach($this->callback, $params); 
+                    if (count($tasks) >= $this->limit) 
+                    {
+                        while (true)
+                        {
+                            usleep(TASK_WAIT_TIME);
+                            foreach ($tasks as $i => $t) {
+                                if (! in_array($t->pid, $pids) and $t->complete()) {
+                                    $results[] = $t->result(); 
+                                    $pids[] = $t->pid;
+                                    $tasks[$i] = null;
+                                    goto onedone;
+                                }
+                            }    
+                        }  
+                        
+                        onedone: 
+                        $tasks = arrays::compact($tasks);
+                    }            
+                }
+            
+                $notdone = true;
+                while ($notdone)
+                {
+                    usleep(TASK_WAIT_TIME);
+                    $notdone = false;
+                    foreach ($tasks as $t) {
+                        if (! $t->complete()) {
+                            $notdone = true;
+                            break;
+                        }
+                        else if (! in_array($t->pid, $pids)) {
+                            $results[] = $t->result();
+                            $pids[] = $t->pid;
+                        }
+                    }
+                }
+                
+                return $results;
+            }
+            
+            /*$pool = Dispatcher::detach(function()
+            { 
                 $results = $this->block ? [] : null;
                 $tasks = [];
                 foreach ($this->data as $i => $item)
@@ -105,13 +156,23 @@ class TaskMap
                     $cnt = count($tasks);
                     if ($cnt >= $this->limit) {
                         $r = Dispatcher::wait_any($tasks);  
-                        if ($r and $results)
+                        //if ($results)
                             $results[] = $r;
-                        $tasks = self::cleanup($tasks);
+                        var_dump($results);
+                        $tasks = self::cleanup($tasks); 
                     } 
                 }
-                return $results ? array_merge($results, Dispatcher::wait(self::cleanup($tasks))) : null;
+                if (is_array($results))
+                {
+                    foreach (Dispatcher::wait($tasks) as $r)
+                        $results[] = $r;
+                    return $results;
+                }
             }); 
+            if ($this->block) {
+                $r = Dispatcher::wait($pool); println($r);
+                return $r;
+            }   */
         }
         else
         {
