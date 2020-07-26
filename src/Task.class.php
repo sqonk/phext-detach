@@ -47,12 +47,19 @@ class Task
 	
 	static protected $allowParentCleanup = true;
     
+    static private $storeLoc;
+    
     public function __construct($callback = null) 
 	{
+        if (! self::$storeLoc) {
+            if (! self::$storeLoc = sys_get_temp_dir())
+                self::$storeLoc = __DIR__.'/.tmp';
+        }
+        
     	if ($callback !== null)
         	$this->setRunnable($callback);
 		
-		$this->commID = 'TASK_ID_'.uniqid(true);
+		$this->commID = 'TASKID_'.uniqid(true);
     }
 	
 	public function __destruct()
@@ -71,7 +78,7 @@ class Task
 		$suffix = $this->isParent ? 'parent' : 'child';
 		$key = "{$this->commID}_{$suffix}";
 		
-		$path = sprintf("%s/%s", sys_get_temp_dir(), $key);
+		$path = sprintf("%s/%s", self::$storeLoc, $key);
 		if (file_exists($path))
 			unlink($path);
 		
@@ -124,7 +131,7 @@ class Task
 	// Do we have result data waiting in the pipe that has not been read in by the parent?
 	public function unread()
 	{
-		$path = sprintf("%s/%s", sys_get_temp_dir(), "{$this->commID}_parent");
+		$path = sprintf("%s/%s", self::$storeLoc, "{$this->commID}_parent");
 		return ! $this->resultHasBeenRetrieved and file_exists($path) and filesize($path) > 0;
 	}
 
@@ -171,7 +178,7 @@ class Task
 		$data = serialize($data);
 		$key = "{$this->commID}_{$suffix}";
 		
-		if (file_put_contents(sprintf("%s/%s", sys_get_temp_dir(), $key), $data, LOCK_EX) === false)
+		if (file_put_contents(sprintf("%s/%s", self::$storeLoc, $key), $data, LOCK_EX) === false)
 			throw new \RuntimeException("Failed to write to file store for '$key'");
 	}
 	
@@ -191,7 +198,7 @@ class Task
 	// Read data from the desired process (parent or child).
 	protected function read(string $suffix)
 	{
-		$path = sprintf("%s/%s", sys_get_temp_dir(), "{$this->commID}_{$suffix}");
+		$path = sprintf("%s/%s", self::$storeLoc, "{$this->commID}_{$suffix}");
 		return file_exists($path) ? unserialize(file_get_contents($path)) : '';
 	}
 	
