@@ -74,17 +74,7 @@ class TaskMap
         $this->limit = $limit;
         return $this;
     }
-    
-    static private function cleanup($tasks)
-    {
-        foreach ($tasks as $i => $task)
-        {
-            if ($task->complete() and ! $task->unread()) 
-                $tasks[$i] = null;
-        }
-        return arrays::compact($tasks);
-    }
-    
+
     protected function _runPool()
     {
         $tasks = [];
