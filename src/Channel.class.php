@@ -49,8 +49,7 @@ class Channel
 		
     /* 
 		Pass a value into the channel. This method will block until the 
-        channel is free to receive new data and again until another task
-        has received the data.
+        channel is free to receive new data again.
 	*/
     public function set($value) 
     {
