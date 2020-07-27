@@ -86,6 +86,9 @@ class Dispatcher
     {
 		if (! $tasks) 
 			$tasks = self::$threads;
+        
+        if (is_array($tasks) && count($tasks) == 1)
+            $tasks = $tasks[0];
 		
         if ($tasks instanceof Task)
 		{
@@ -108,7 +111,7 @@ class Dispatcher
 		
 		return array_map(function($t) { 
             return $t->result(); 
-        }, self::$threads);				
+        }, $tasks);				
     }
 	
     /* 
