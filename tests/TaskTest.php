@@ -12,8 +12,8 @@ class TaskTest extends TestCase
         detach (function() {
             return 100;
         });
-        $results = detach_wait();
-        $this->assertEquals(100, $results[0]);
+        $r = detach_wait();
+        $this->assertEquals(100, $r);
     }
     
     protected function dispatch($amount)
@@ -67,6 +67,25 @@ class TaskTest extends TestCase
         return $this->assertSame(1, $r);
     }
     
+    public function testWaitThree()
+    {
+        $input = range(1, 3);
+        foreach ($input as $i)
+        {
+            detach(function($num) {
+                return $num;
+            }, [$i]);
+        }
+        
+        $results = detach_wait();
+        foreach ($results as $r) {
+            $this->assertContains($r, $input);
+            $input = array_filter($input, function($v) use ($r) {
+                return $v != $r;
+            });
+        }
+    }
+    
     public function testDetachWithArgsWhatWePutInIsWhatWeGetOut()
     {
         detach (function($a, $b) {
@@ -74,9 +93,8 @@ class TaskTest extends TestCase
         }, [10, 2.5]);
         
         $r = detach_wait();  
-        $this->assertEquals(1, count($r));
         
-        $this->assertEquals(10, $r[0][0]);
-        $this->assertEquals(2.5, $r[0][1]);
+        $this->assertEquals(10, $r[0]);
+        $this->assertEquals(2.5, $r[1]);
     }
 }
