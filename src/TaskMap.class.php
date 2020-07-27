@@ -85,6 +85,60 @@ class TaskMap
         return arrays::compact($tasks);
     }
     
+    protected function _runPool()
+    {
+        $tasks = [];
+        $results = []; $pids = [];
+        foreach ($this->data as $item)
+        {
+            $params = is_array($item) ? $item : [$item];
+            if ($this->params)
+                $params = array_merge($params, $this->params);
+            
+            $tasks[] = Dispatcher::detach($this->callback, $params); 
+            if (count($tasks) >= $this->limit) 
+            {
+                // The concurrency pool is already at the desired limit,
+                // so wait for any of the currently running tasks to complete.
+                while (true)
+                {
+                    usleep(TASK_WAIT_TIME);
+                    foreach ($tasks as $i => $t) {
+                        if (! in_array($t->pid, $pids) and $t->complete()) {
+                            $results[] = $t->result(); 
+                            $pids[] = $t->pid;
+                            $tasks[$i] = null;
+                            goto onedone;
+                        }
+                    }    
+                }  
+                
+                onedone: 
+                $tasks = arrays::compact($tasks);
+            }            
+        }
+        
+        // wait for all tasks to complete.
+        $notdone = true;
+        while ($notdone)
+        {
+            usleep(TASK_WAIT_TIME);
+            $notdone = false;
+            foreach ($tasks as $t) {
+                if (! $t->complete()) {
+                    $notdone = true;
+                    break;
+                }
+                else if (! in_array($t->pid, $pids)) {
+                    $results[] = $t->result();
+                    $pids[] = $t->pid;
+                }
+            }
+        }
+        
+        return $results;
+    }
+    
     // Begin the task map.
     public function start()
     {
@@ -92,87 +146,14 @@ class TaskMap
         {
             if ($this->block)
             {
-                $tasks = [];
-                $results = []; $pids = [];
-                foreach ($this->data as $item)
-                {
-                    $params = is_array($item) ? $item : [$item];
-                    if ($this->params)
-                        $params = array_merge($params, $this->params);
-                    
-                    $tasks[] = Dispatcher::detach($this->callback, $params); 
-                    if (count($tasks) >= $this->limit) 
-                    {
-                        while (true)
-                        {
-                            usleep(TASK_WAIT_TIME);
-                            foreach ($tasks as $i => $t) {
-                                if (! in_array($t->pid, $pids) and $t->complete()) {
-                                    $results[] = $t->result(); 
-                                    $pids[] = $t->pid;
-                                    $tasks[$i] = null;
-                                    goto onedone;
-                                }
-                            }    
-                        }  
-                        
-                        onedone: 
-                        $tasks = arrays::compact($tasks);
-                    }            
-                }
-            
-                $notdone = true;
-                while ($notdone)
-                {
-                    usleep(TASK_WAIT_TIME);
-                    $notdone = false;
-                    foreach ($tasks as $t) {
-                        if (! $t->complete()) {
-                            $notdone = true;
-                            break;
-                        }
-                        else if (! in_array($t->pid, $pids)) {
-                            $results[] = $t->result();
-                            $pids[] = $t->pid;
-                        }
-                    }
-                }
-                
-                return $results;
+                return $this->_runPool();
             }
-            
-            /*$pool = Dispatcher::detach(function()
-            { 
-                $results = $this->block ? [] : null;
-                $tasks = [];
-                foreach ($this->data as $i => $item)
-                {
-                    $params = [$item];
-                    if ($this->params)
-                        $params = array_merge($params, $this->params);
-                    
-                    $tasks[] = Dispatcher::detach($this->callback, $params);  
-                    
-                    $cnt = count($tasks);
-                    if ($cnt >= $this->limit) {
-                        $r = Dispatcher::wait_any($tasks);  
-                        //if ($results)
-                            $results[] = $r;
-                        var_dump($results);
-                        $tasks = self::cleanup($tasks); 
-                    } 
-                }
-                if (is_array($results))
-                {
-                    foreach (Dispatcher::wait($tasks) as $r)
-                        $results[] = $r;
-                    return $results;
-                }
-            }); 
-            if ($this->block) {
-                $r = Dispatcher::wait($pool); println($r);
-                return $r;
-            }   */
+            else
+            {
+                Dispatcher::detach(function() {
+                    return $this->_runPool();
+                });
+            }
         }
         else
         {
