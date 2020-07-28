@@ -25,7 +25,7 @@ class BufferedChannelTest extends TestCase
 
         // wait for all tasks to complete and then print each result.	
         $tally = 0;
-        while ($r = $chan->get() and $r != TASK_CHANNEL_NO_DATA) {
+        while ($r = $chan->get()) {
             $tally++;
         }
         

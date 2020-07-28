@@ -28,7 +28,6 @@ namespace sqonk\phext\detach;
 	wait for incoming data where required.
 */
 
-define('TASK_CHANNEL_NO_DATA', '__data_none__');
 
 class Channel
 {
@@ -105,13 +104,13 @@ class Channel
     
         If $wait is given as an integer of 1 or more then it is used as a timeout
         in seconds. In such a case, if nothing is received before the timeout then 
-        a value of TASK_CHANNEL_NO_DATA will be returned.
+        a value of NULL will be returned.
 	
 		$wait defaults to TRUE.    
 	*/
     public function get($wait = true) 
     {
-		$value = TASK_CHANNEL_NO_DATA;
+		$value = null;
         $started = time();
         $waitTimeout = 0; 
         if (is_int($wait)) {

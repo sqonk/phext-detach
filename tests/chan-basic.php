@@ -16,7 +16,6 @@ $input = range(1, 10);
 $chan = new Channel;
 detach ('gen', [$chan]);
 
-while ($r = $chan->next(2) and $r != TASK_CHANNEL_NO_DATA) { 
+while ($r = $chan->next(2)) { 
     println("out $r");
-   // $this->assertSame($r, array_shift($input));
 }

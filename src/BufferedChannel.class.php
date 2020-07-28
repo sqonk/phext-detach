@@ -121,7 +121,7 @@ class BufferedChannel
     
         If $wait is given as an integer of 1 or more then it is used as a timeout
         in seconds. In such a case, if nothing is received before the timeout then 
-        a value of TASK_CHANNEL_NO_DATA will be returned if nothing is received 
+        a value of NULL will be returned if nothing is received 
         prior to the expiry.
 	
 		$wait defaults to TRUE.    
@@ -131,7 +131,7 @@ class BufferedChannel
 		if ($this->capacity !== null and $this->readCount >= $this->capacity)
 			return false;
 		
-		$value = TASK_CHANNEL_NO_DATA;
+		$value = null;
         $started = time();
         $waitTimeout = 0; 
         if (is_int($wait)) {
