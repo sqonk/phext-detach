@@ -22,9 +22,8 @@ dispatch::map($input, $cb)->block(false)->limit(3)->params($chan)->start();
 
 // wait for all tasks to complete and then print each result.	
 $tally = 0;
-while ($r = $chan->get() and $r != TASK_CHANNEL_NO_DATA) {
+while ($r = $chan->get()) {
     $tally++;
     println("##RESULT: $r", 'tally', $tally);
 }
 
-println('expected:', count($input), 'got:', $tally, '-- pass:', (bool)(count($input) == $tally));		
