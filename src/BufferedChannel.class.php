@@ -20,12 +20,11 @@ namespace sqonk\phext\detach;
 */
 
 /*
-    Channel is a loose implentation of channels from the go language. It provides a simple
-    way of allowing independant processes to send and receive data between one another. 
+A BufferedChannel is an queue of values that may be passed between tasks. Unlike a standard channel, it may continue to accept new values before any existing ones have been read in via another task.
 
-	By default reading from the channel will block and in this fashion it can be used
-	as a logic gate for controlling the execution of various tasks by forcing them to 
-	wait for incoming data where required.
+The queue is unordered, meaning that values may be read in in a different order from that of which they were put in.
+
+BufferedChannels are an effective bottle-necking system where data obtained from multiple tasks may need to be fed into a singular thread for post-processing.
 */
 use sqonk\phext\core\strings;
 

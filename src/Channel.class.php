@@ -20,12 +20,9 @@ namespace sqonk\phext\detach;
 */
 
 /*
-    Channel is a loose implentation of channels from the go language. It provides a simple
-    way of allowing independant processes to send and receive data between one another. 
+Channel is a loose implentation of channels from the Go language. It provides a simple way of allowing independant processes to send and receive data between one another. 
 
-	By default reading from the channel will block and in this fashion it can be used
-	as a logic gate for controlling the execution of various tasks by forcing them to 
-	wait for incoming data where required.
+A channel is a block-in, and (by default) a block-out mechanism, meaning that the task that sets a value will block until another task has received it.
 */
 
 
