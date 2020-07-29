@@ -29,23 +29,13 @@ Depending on what Detach is being used for but assuming it is largely CPU work, 
 
 
 
-#### A word of caution on the web
-
-This library is mainly designed with the CLI SAPI in mind (scripts and programs that are run from the command line).
-
-*PHP is a single-threaded language*. Predominantly used for server-side web development, the creator of PHP [has made his opinions quite clear](#https://www.youtube.com/watch?v=OEMuHy5Srk8)  that multi-threading under a web SAPI makes little sense.
-
-Having said that, there is nothing technically stopping it from being run under any environment as long as PCNTL is active. 
-
-
-
 #### Alternatives
 
 The solution provided in this library is nothing new. It is a modernised, rewritten and extended version of the "Thread" class originally written by Tudor Barbu. 
 
 Detach is *not* an asynchronous or event-driven IO framework. [ReactPHP](https://reactphp.org) and [Amp](https://amphp.org) both provide comprehensive solutions in this space.
 
-If you have the ability to install PECL extensions then you should consider [Parallel](https://github.com/amphp/parallel) as an option if you desire *true multi-threading*.
+If you have the ability to install PECL extensions there is a native concurrency extension for PHP 7.2+ called [Parallel](https://github.com/krakjoe/parallel) .
 
 The [spatie/async](https://github.com/spatie/async) library provides an alternative solution that also uses PCNTL forking but with an API and structure that may be more familiar to many developers.
 
