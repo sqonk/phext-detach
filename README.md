@@ -3,21 +3,55 @@
 [![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%207.3-8892BF.svg)](https://php.net/)
 [![License](https://sqonk.com/opensource/license.svg)](license.txt)
 
-Detach is a libary for running tasks inside of a PHP script in parallel using forked processes.
+Detach is a libary for running tasks inside of a PHP script in parallel using forked processes, ideally targetting CPU-bound processing. It clones a seperate process (based on the parent) and executes the requested callback. 
 
-This class is a modernised and rewritten version of the Thread class originally written by Tudor Barbu. It forks a seperate process (based on the parent) and executes the requested callback.
+It is light weight and relies on little else other than the PCNTL PHP extension and a minor set of composer packages.
 
-While the spawned tasks have the ability to return data back to the parent there is also the option of using Channels, a loose implentation of channels from the go language, which provide a simple way of allowing independant processes to send and receive data between one another.
+Detach is also minimalist in nature with just a small set of functions and classes to memorise. There is no event system and no architecture to learn, allowing it to fit easily within an existing code structure. 
+
+See the [examples](#examples) for a quick start guide.
+
+While the spawned tasks have the ability to return data back to the parent there is also the option of using Channels, a loose implementation of channels from the Go language, which provide a simple way of allowing independent processes to send and receive data between one another.
 
 Channels can also be used as logic gates for controlling the execution of various tasks by forcing them to wait for incoming data where required.
 
-This library requires the pcntl PHP extension to be installed and active. 
+#### Communicating between tasks 
 
-## About PHEXT
+###### (Implementation details)
 
-The PHEXT package is a set of libraries for PHP that aim to solve common problems with a syntax that helps to keep your code both concise and readable.
+Data transfer between seperate processes takes place via a file-storage system, defaulting to PHPs temporary directory and falling back to the directory of the running script if the former is not specified in the PHP config.
 
-PHEXT aims to not only be useful on the web SAPI but to also provide a productivity boost to command line scripts, whether they be for automation, data analysis or general research.
+Semaphores are used internally to control synchronisation between tasks.
+
+Multiple methods for data transfer were explored and while other options such as shared memory segments were undoubtedly faster, file storage was found to be the most reliable. 
+
+Depending on what Detach is being used for but assuming it is largely CPU work, the impact of moving data  via the disk should be minimal, certainly with modern SSD drives.
+
+
+
+#### A word of caution on the web
+
+This library is mainly designed with the CLI SAPI in mind (scripts and programs that are run from the command line).
+
+*PHP is a single-threaded language*. Predominantly used for server-side web development, the creator of PHP [has made his opinions quite clear](#https://www.youtube.com/watch?v=OEMuHy5Srk8)  that multi-threading under a web SAPI makes little sense.
+
+Having said that, there is nothing technically stopping it from being run under any environment as long as PCNTL is active. 
+
+
+
+#### Alternatives
+
+The solution provided in this library is nothing new. It is a modernised, rewritten and extended version of the "Thread" class originally written by Tudor Barbu. 
+
+Detach is *not* an asynchronous or event-driven IO framework. [ReactPHP](https://reactphp.org) and [Amp](https://amphp.org) both provide comprehensive solutions in this space.
+
+If you have the ability to install PECL extensions then you should consider [Parallel](https://github.com/amphp/parallel) as an option if you desire *true multi-threading*.
+
+The [spatie/async](https://github.com/spatie/async) library provides an alternative solution that also uses PCNTL forking but with an API and structure that may be more familiar to many developers.
+
+Finally, there is also the [Worker Pool](https://packagist.org/packages/qxsch/worker-pool) package.
+
+
 
 ## Install
 
@@ -33,6 +67,7 @@ Method/Class Index
 - [Global Methods](#global-methods)
 - [Dispatcher](#dispatcher)
 - [Channel](#channel)
+- [BufferedChannel](#bufferedchannel)
 - [TaskMap](#taskmap)
 - [Examples](#examples)
 
@@ -51,17 +86,7 @@ These global methods act as convienience API to the Dispatcher and save having t
 function detach($callback, array $args = [])
 ```
 
-Execute the provided callback on a seperate process.
-
-Each call creates a Task, which is a spawned subprocess that operates independently of the original process.
-
-It is useful for environments that need to run a block of code in parallel.
-
-`$callback`: The method to be called from the detached task.
-
-`$data`: Any parameters to be passed to the callback method.
-
-Returns the newly created and started task.
+A global namespace interface to [Dispatcher::detach](#dispatcher::detach)
 
 
 
@@ -71,11 +96,27 @@ Returns the newly created and started task.
 function detach_wait(sqonk\phext\detach\Task $task = null)
 ```
 
-Wait for one or more currently running tasks to complete.
+A global namespace interface to [Dispatcher::wait](#dispatcher::wait)
 
-This method will accept a single task or an array of tasks. If nothing is passed in then it will wait for all currently running tasks to finish.
 
-Returns the result of the task or an array of results depending on how many tasks are being waited on.
+
+##### detach_pid
+
+```php
+function detach_pid()
+```
+
+Returns the PID of the current process the caller is on. This is set to NULL for the parent process.
+
+
+
+##### detach_kill
+
+```php
+function detach_kill()
+```
+
+Immediately stop all running tasks.
 
 
 
@@ -89,7 +130,7 @@ use \sqonk\phext\detach\Dispatcher;
 
 
 
-##### detach
+##### Dispatcher::detach
 
 ```php
 static public function detach($callback, array $args = [])
@@ -109,7 +150,7 @@ Returns the newly created and started task.
 
 
 
-##### map
+##### Dispatcher::map
 
 ```php
 static public function map(iterable $data, callable $callback, array $options = [])
@@ -121,7 +162,7 @@ This method returns a TaskMap object that can be further configured. See [TaskMa
 
 
 
-##### wait
+##### Dispatcher::wait
 
 ```php
 static public function wait($tasks = null)
@@ -131,11 +172,11 @@ Wait for one or more currently running tasks to complete.
 
 This method will accept a single task or an array of tasks. If nothing is passed in then it will wait for all currently running tasks to finish.
 
-Returns the result of the task or an array of results depending on how many tasks are being waited on.
+Returns the result of *a* task or an array of results depending on how many tasks are being waited on.
 
 
 
-##### wait_any
+##### Dispatcher::wait_any
 
 ```php
 static public function wait_any(?array $tasks = null)
@@ -145,20 +186,78 @@ Wait for at least one task (out of many) to complete.
 
 If nothing is passed in then it will use the set of currently running tasks.
 
-Returns the result of the first task in the array to finish.
+Returns the result of the first task to complete.
+
+
+
+##### Dispatcher::kill
+
+```php
+static public function kill()
+```
+
+Immediately stop all running tasks.
 
 
 
 ### Channel
 
-Channel is a loose implentation of channels from the Go language. They provide a simple way of allowing independant processes to send and receive data between one another. 
+Channel is a loose implentation of channels from the Go language. It provides a simple way of allowing independant processes to send and receive data between one another. 
 
-By default reading from the channel will block and in this fashion it can be used as a logic gate for controlling the execution of various tasks by forcing them to wait for incoming data where required.
+*A channel is a block-in, and (by default) a block-out mechanism*, meaning that the task that sets a value will block until another task has received it.
 
 ```php
 use \sqonk\phext\detach\Channel;
 
 $chan = new Channel;
+```
+
+
+
+##### set / put
+
+```php
+public function set($value)
+```
+
+```php
+public function put($value) // alias
+```
+
+Push a new value through the channel. The calling task will block until another task has received the value.
+
+
+
+##### get / next
+
+```php
+public function get($wait = true) 
+```
+
+```php
+public function next($wait = true) // next
+```
+
+Obtain the next value on the channel (if any). If `$wait` is `TRUE` then this method will block until a new value is received. Be aware that in this mode the method will block forever if no further values are sent from other tasks.
+
+If `$wait` is given as an integer of 1 or more then it is used as a timeout  in seconds. In such a case, if nothing is received before the timeout then a value of `TASK_CHANNEL_NO_DATA` will be returned.
+
+`$wait` defaults to `TRUE`. 
+
+
+
+### BufferedChannel
+
+A BufferedChannel is a queue of values that may be passed between tasks. Unlike a standard channel, it may continue to accept new values before any existing ones have been read in via another task.
+
+The queue is unordered, meaning that values may be read in in a different order from that of which they were put in.
+
+BufferedChannels are an effective bottle-necking system where data obtained from multiple tasks may need to be fed into a singular thread for post-processing.
+
+```php
+use \sqonk\phext\detach\BufferedChannel;
+
+$chan = new BufferedChannel;
 ```
 
 
@@ -185,27 +284,25 @@ public function set($value)
 public function put($value) // alias
 ```
 
-Queue a value onto the channel, causing all readers to wake up.
+Queue a new value onto the channel, causing all waiting readers to wake up.
 
 
 
 ##### get / next
 
 ```php
-public function get(bool $wait = true, bool $removeAfterRead = true) 
+public function get($wait = true) 
 ```
 
 ```php
-public function next(bool $wait = true, bool $removeAfterRead = true) // next
+public function next($wait = true) // next
 ```
 
-Obtain the next value on the queue (if any). If `$wait` is `TRUE` then this method will block until a new value is received. Be aware that in this mode the method will block forever if no further values are queued from other tasks.
+Obtain the next value on the channel (if any). If `$wait` is `TRUE` then this method will block until a new value is received. Be aware that in this mode the method will block forever if no further values are sent from other tasks.
 
-If `$removeAfterRead` is `TRUE` then the value will be removed from the queue at the same time it is read.
+If `$wait` is given as an integer of 1 or more then it is used as a timeout  in seconds. In such a case, if nothing is received before the timeout then a value of `NULL` will be returned.
 
-If the read capacity of the channel is set and has been exceeded then this method will return `FALSE` immediately.
-
-`$wait` and `$removeAfterRead` default to `TRUE`.
+`$wait` defaults to `TRUE`. 
 
 
 
@@ -220,6 +317,8 @@ $array = []; // ... your data array.
 $map = dispatch::map($array, 'myCallBack');
 
 ```
+
+or
 
 ```php
 use sqonk\phext\detach\TaskMap;
@@ -246,7 +345,7 @@ Set whether the main program will block execution until all tasks have completed
 public function params(...$args) : TaskMap
 ```
 
-A provide a series of auxiliary parameters that are provided to the callback  in addition to the main element passed in.
+Provide a series of auxiliary parameters that are provided to the callback in addition to the main element passed in.
 
 
 
@@ -256,9 +355,9 @@ A provide a series of auxiliary parameters that are provided to the callback  in
 public function limit(int $limit) : TaskMap
 ```
 
-Set the maximum number of tasks that may run concurrently. If the number is below 1 then no limit is applied and as many tasks as there are elements in the data array will be created spawned.
+Set the maximum number of tasks that may run concurrently. If the number is below 1 then no limit is applied and as many tasks as there are elements in the data array will be spawned.
 
-The default is 0.
+The default is 0 (unlimited).
 
 
 
@@ -274,13 +373,30 @@ Begin execution of the tasks.
 
 ## Examples
 
-Basic usage with an anonymous function as a callback that returns the result to the parent task.
+Basic usage with an anonymous function as a callback.
+
+```php
+$task = detach (function() {
+    foreach (range(1, 10) as $i)
+        print " $i ";
+});
+
+println('waiting');
+while (! $task->complete()) {
+  print '.';
+}
+println("\n", 'done');
+```
+
+ 
+
+Generate 10 tasks, each returning a random number to the parent process.
 
 ``` php
 // generate 10 seperate tasks, all of which return a random number.
 foreach (range(1, 10) as $i)
   detach (function() use ($i) {
-    usleep(rand(1000, 100000));
+    usleep(rand(100, 1000));
   	return [$i, rand(1, 4)];
   });
 
@@ -289,14 +405,16 @@ foreach (detach_wait() as [$i, $rand])
 	println("$i random number was $rand");	
 ```
 
-The same example but with the use `map`
+
+
+The same example but with the use of `Dispatcher::map`
 
 ```php
 use sqonk\phext\detach\Dispatcher as dispatch;
 
 // generate 10 seperate tasks, all of which return a random number.
 $r = dispatch::map(range(1, 10), function($i) {
-	usleep(rand(1000, 100000));
+	usleep(rand(100, 1000));
 	return [$i, rand(1, 4)];
 })->start();
 
@@ -305,26 +423,28 @@ foreach ($r as [$i, $rand])
 	println("$i random number was $rand");	
 ```
 
+
+
 .. or a more complex version using non-blocking and a pool limit of 3.
 
 ```php
 use sqonk\phext\detach\Dispatcher as dispatch;
-use sqonk\phext\detach\Channel;
+use sqonk\phext\detach\BufferedChannel;
 
 // generate 10 seperate tasks, all of which return a random number.
-$chan = new Channel;
+$chan = new BufferedChannel;
 $chan->capacity(10); // we'll be waiting on a maximum of 10 inputs.
 
 $cb = function($i, $chan) {
-  usleep(rand(1000, 100000));
-	$chan->put(rand(1, 4));
+  usleep(rand(100, 1000));
+	$chan->put([$i, $i+5]);
 };
 
 dispatch::map(range(1, 10), $cb)->limit(3)->block(false)->params($chan)->start();
 
 // wait for all tasks to complete and then print each result.	
-while ($r = $chan->get() and $r != TASK_CHANNEL_NO_DATA)
-	println("result: $r");
+while ($r = $chan->get(2))
+	println($r[0], 'number is:', $r[1]);
 ```
 
 
@@ -369,6 +489,8 @@ println($chan2->get());
 // will output 100.
 ```
 
+
+
 If you wish to go the object-orientated route you can extend the Task class and manage the execuation yourself.
 
 ``` php
@@ -392,11 +514,15 @@ println('task complete, result is', $t->result());
 // will print out the data returned from the task, which is '2' in this example.
 ```
 
+
+
 ## Credits
 
 Theo Howell
 
 Please see original concept of pnctl Threading by Tudor Barbu @ <a href="https://github.com/motanelu/php-thread">motanelu/php-thread</a>
+
+
 
 ## License
 
