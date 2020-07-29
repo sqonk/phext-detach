@@ -46,8 +46,15 @@ class Task
 	protected $resultHasBeenRetrieved = false; // helps prevent auto-cleanup on completed tasks with un-fetched results.
 	
 	static protected $allowParentCleanup = true;
-    
+	    
     static private $storeLoc;
+    
+    static protected $currentPID;
+    
+    static public function currentPID()
+    {
+        return self::$currentPID;
+    }
     
     public function __construct($callback = null) 
 	{
@@ -65,23 +72,30 @@ class Task
 	public function __destruct()
 	{
 		$this->cleanup();
-        if ($this->pid)
-            $this->stop();
 	}
 	
 	// clean up any communication channels associated with the process.
-	public function cleanup()
+	public function cleanup(string $suffix = '')
 	{
-		if ($this->isParent and ! self::$allowParentCleanup)
-			return;
+		/*
+			Because the forking process duplicates the current runtime we not
+			only end up with the child process but also ghost copies of the 
+			parent. Therefore the current PID is used to detect when on the 
+            child-side and to never wipe the communication channel for 
+			the real parent operating in the main process.
+		*/
+        if (! $suffix)
+        {
+    		if ($this->isParent and ! self::$allowParentCleanup)
+    			return;
 				
-		$suffix = $this->isParent ? 'parent' : 'child';
+    		$suffix = $this->isParent ? 'parent' : 'child';
+        }
 		$key = "{$this->commID}_{$suffix}";
 		
 		$path = sprintf("%s/%s", self::$storeLoc, $key);
 		if (file_exists($path))
-			unlink($path);
-		
+			@unlink($path);
 	}
 	
 	// Get or set the callback for the child process to run.
@@ -147,27 +161,26 @@ class Task
 		{
             // parent process receives the pid.
             $this->pid = $pid;
+            $this->sendToChild($pid);
         }
         else 
 		{
 			// child process entry point.
-			$this->isParent = false;
-			
-			/*
-				Because the forking process duplicates the current runtime we not
-				only end up with the child process but also ghost copies of the 
-				parent. Therefore we need a global flag that instructs the cleanup
-				manager on the child-side to never wipe the communication channel for 
-				the real parent operating in the originating process.
-			*/
 			self::$allowParentCleanup = false;
+			$this->isParent = false;			
 			
             // child
             pcntl_signal(SIGTERM, array($this, 'signalHandler'));
             
+            self::$currentPID = $this->readFromParent(); // store the PID we are currently on.
+            
+            register_shutdown_function(function() {
+                $this->cleanup();
+            });
+            
 			if ($resp = $this->run(...$args)) 
 				$this->sendToParent($resp);
-			$this->cleanup();
+			
             exit;
         }
     }
@@ -250,7 +263,7 @@ class Task
 		{
             posix_kill($this->pid, $signal);
             if ($wait) {
-                pcntl_waitpid($this->pid, $status = 0);
+                pcntl_waitpid($this->pid, $status);
             }
         }
     }

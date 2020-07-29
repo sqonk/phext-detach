@@ -21,8 +21,15 @@ class TaskMapTest extends TestCase
         if (! $block)
             $results = detach_wait();
         $this->assertSame(count($range), count($results));
-        foreach ($results as $r)
+        foreach ($results as $r) {
             $this->assertContains($r, $range);
+            $range = array_filter($range, function($v) use ($r) {
+                return $v != $r;
+            });
+        }
+            
+        
+        detach_kill(); 
     }
     
     public function testBlockingNoLimitWith10()

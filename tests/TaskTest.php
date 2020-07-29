@@ -14,6 +14,8 @@ class TaskTest extends TestCase
         });
         $r = detach_wait();
         $this->assertEquals(100, $r);
+        
+        detach_kill();
     }
     
     protected function dispatch($amount)
@@ -33,6 +35,8 @@ class TaskTest extends TestCase
         
         foreach ($results as $r)
             $this->assertEquals($r[0]+5, $r[1]);
+        
+        detach_kill();
     }
     
     public function testDispatch10Tasks()
@@ -55,7 +59,7 @@ class TaskTest extends TestCase
         });
         
         $this->assertContains(Dispatcher::wait_any(), [1,2]);
-        detach_wait(); // clear out the other result.
+        detach_kill(); // clear out the other result.
     }
     
     public function testWaitSingle()
@@ -64,7 +68,10 @@ class TaskTest extends TestCase
             return 1;
         });
         $r = detach_wait($t);
-        return $this->assertSame(1, $r);
+        
+        $this->assertSame(1, $r);
+        
+        detach_kill();
     }
     
     public function testWaitThree()
@@ -84,6 +91,8 @@ class TaskTest extends TestCase
                 return $v != $r;
             });
         }
+        
+        detach_kill();
     }
     
     public function testDetachWithArgsWhatWePutInIsWhatWeGetOut()
@@ -96,5 +105,7 @@ class TaskTest extends TestCase
         
         $this->assertEquals(10, $r[0]);
         $this->assertEquals(2.5, $r[1]);
+        
+        detach_kill();
     }
 }

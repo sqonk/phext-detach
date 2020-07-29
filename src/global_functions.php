@@ -31,9 +31,9 @@
 
     @returns            The newly created and started task.
 */
-function detach($callback, array $args = []) 
+function detach(callable $callback, array $args = []) 
 {
-    return sqonk\phext\detach\Dispatcher::detach($callback, $args);
+    return \sqonk\phext\detach\Dispatcher::detach($callback, $args);
 }
 
 /* 
@@ -48,5 +48,20 @@ function detach($callback, array $args = [])
 */
 function detach_wait(sqonk\phext\detach\Task $task = null)
 {
-    return sqonk\phext\detach\Dispatcher::wait($task);
+    return \sqonk\phext\detach\Dispatcher::wait($task);
+}
+
+/*
+    Returns the PID of the current process the caller is on. This is
+    set to NULL for the parent process.
+*/
+function detach_pid()
+{
+    return \sqonk\phext\detach\Task::currentPID();
+}
+
+// Immediately stop all running tasks.
+function detach_kill()
+{
+    \sqonk\phext\detach\Dispatcher::kill();
 }

@@ -119,9 +119,9 @@ class TaskMap
                     $notdone = true;
                     break;
                 }
-                else if (! in_array($t->pid, $pids)) {
+                else if (! in_array($t->pid(), $pids)) {
                     $results[] = $t->result();
-                    $pids[] = $t->pid;
+                    $pids[] = $t->pid();
                 }
             }
         }

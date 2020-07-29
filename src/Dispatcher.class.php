@@ -25,6 +25,8 @@ class Dispatcher
 {
     static private $threads = [];
     
+    static protected $shutdownSet = false;
+        
 	/*
 		Execute the provided callback on a seperate process.
 
@@ -42,6 +44,13 @@ class Dispatcher
     static public function detach(callable $callback, array $args = [])
     {
         self::cleanup(); // remove any completed threads from the register.
+        
+        if (! detach_pid() and ! self::$shutdownSet) {
+            register_shutdown_function(function() {
+                detach_kill();
+            });
+            self::$shutdownSet = true;
+        }
         
         $t = new Task($callback);
 		self::$threads[] = $t; // add to the internal register to prevent GC.    
@@ -86,6 +95,9 @@ class Dispatcher
     {
 		if (! $tasks) 
 			$tasks = self::$threads;
+        
+        if (is_array($tasks) && count($tasks) == 0)
+            return;
         
         if (is_array($tasks) && count($tasks) == 1)
             $tasks = $tasks[0];
@@ -138,6 +150,18 @@ class Dispatcher
                     return $t->result(); 
         }
 	}
+    
+    // Immediately stop all running tasks.
+    static public function kill()
+    {
+        foreach (self::$threads as $t) {
+            if ($t->isAlive())
+                $t->stop(SIGKILL, true);
+            $t->cleanup('child'); // remove any storage on the child side.
+        }
+        
+        self::$threads = [];
+    }
 }
 
 

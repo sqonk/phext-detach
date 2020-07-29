@@ -40,8 +40,28 @@ class Channel
         $this->key = "CHANID-".uniqid();
         $this->filepath = self::$storeLoc."/{$this->key}";
         $this->sem_id = sem_get(ftok(__FILE__, 'l'));
+        
+        $this->createdByPID = detach_pid();
+        register_shutdown_function(function() {
+            $this->cleanup();
+        });
 	}
 
+    public function __destruct()
+    {
+        $this->cleanup();
+    }
+    
+    protected function cleanup()
+    {
+        if (sem_acquire($this->sem_id))
+        {
+            if (file_exists($this->filepath) and detach_pid() == $this->createdByPID)
+                unlink($this->filepath);
+            if (! sem_release($this->sem_id))
+               dump_stack("## WARNING: Failed to release lock for {$this->key}");
+        }
+    }
 		
     /* 
 		Pass a value into the channel. This method will block until the 

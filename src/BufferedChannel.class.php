@@ -47,7 +47,28 @@ class BufferedChannel
 		$this->key = 'BCHAN-'.uniqid();
         $this->filepath = self::$storeLoc."/{$this->key}";
         $this->sem_id = sem_get(ftok(__FILE__, 'l'));
+        
+        $this->createdByPID = detach_pid();
+        register_shutdown_function(function() {
+            $this->cleanup();
+        });
 	}
+    
+    public function __destruct()
+    {
+        $this->cleanup();
+    }
+    
+    protected function cleanup()
+    {
+        if (sem_acquire($this->sem_id))
+        {
+            if (file_exists($this->filepath) and detach_pid() == $this->createdByPID)
+                unlink($this->filepath);
+            if (! sem_release($this->sem_id))
+               dump_stack("## WARNING: Failed to release lock for {$this->key}");
+        }
+    }
 	
 	/*
 		Set an arbitrary limit on the number of times data will be ready 
