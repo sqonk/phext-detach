@@ -94,9 +94,9 @@ class TaskMap
                 {
                     usleep(TASK_WAIT_TIME);
                     foreach ($tasks as $i => $t) {
-                        if (! in_array($t->pid, $pids) and $t->complete()) {
+                        if (! in_array($t->pid(), $pids) and $t->complete()) {
                             $results[] = $t->result(); 
-                            $pids[] = $t->pid;
+                            $pids[] = $t->pid();
                             $tasks[$i] = null;
                             goto onedone;
                         }

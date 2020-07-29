@@ -39,7 +39,7 @@ define('TASK_WAIT_TIME', 500);
 class Task 
 {
     protected $callback; // callback method run from the seperate process.
-    public    $pid; // holds the child process id in the parent.
+    protected $pid; // holds the child process id in the parent.
 	protected $isParent = true; // Used internally to determine which address space we are currently in.
 	protected $commID; // uniqid key for the parent and child to send data to one another.
 	protected $started = false; // has the task actually begun.
