@@ -34,3 +34,5 @@ foreach (range(0, 9) as $i)
     detach ('filter', [$ch, $ch1, $prime]);
     $ch = $ch1;
 }
+
+//detach_kill();
