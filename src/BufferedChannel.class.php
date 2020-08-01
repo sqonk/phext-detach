@@ -34,7 +34,8 @@ class BufferedChannel
 	protected $capacity;
 	protected $readCount = 0;
     
-    const BOUNDARY = "#___CHANITEMBOUNDARY___#";
+    private const BOUNDARY = "#___CHANITEMBOUNDARY___#";
+    private const CHAN_SIG_CLOSE = "#__CHAN-CLOSE__#";
     
     static private $storeLoc;
 				
@@ -61,11 +62,11 @@ class BufferedChannel
     
     protected function cleanup()
     {
-        if (sem_acquire($this->sem_id))
+        if ($this->sem_id === null or @sem_acquire($this->sem_id))
         {
             if (file_exists($this->filepath) and detach_pid() == $this->createdByPID)
                 unlink($this->filepath);
-            if (! sem_release($this->sem_id))
+            if ($this->sem_id && ! @sem_release($this->sem_id))
                dump_stack("## WARNING: Failed to release lock for {$this->key}");
         }
     }
@@ -83,12 +84,21 @@ class BufferedChannel
 		$this->readCount = 0;
         return $this;
 	}
+    
+    // Close off the channel, signalling to the receiver that no further values will be sent.
+    public function close()
+    {
+        $this->set(self::CHAN_SIG_CLOSE);
+        $this->sem_id = null;
+    }
 	
     /* 
 		Queue a value onto the channel, causing all readers to wake up.
 	*/
     public function set($value) 
     { 
+        if (! $this->sem_id)
+            return;
         /*
             Rules:
             - Require lock.
@@ -148,8 +158,8 @@ class BufferedChannel
 	*/
     public function get($wait = true) 
     {
-		if ($this->capacity !== null and $this->readCount >= $this->capacity)
-			return false;
+		if ($this->capacity !== null and $this->readCount >= $this->capacity || ! $this->sem_id)
+			return null;
 		
 		$value = null;
         $started = time();
@@ -164,7 +174,7 @@ class BufferedChannel
             if ($waitTimeout > 0 and time()-$started >= $waitTimeout)
                 break;
             
-            if (sem_acquire($this->sem_id))
+            if (@sem_acquire($this->sem_id))
             {
                 $delete = false;
                 try {
@@ -212,6 +222,13 @@ class BufferedChannel
 			
 			usleep(TASK_WAIT_TIME); 
 		}
+        
+        if ($value == self::CHAN_SIG_CLOSE)
+        {
+            $value = null;
+            @sem_remove($this->sem_id);
+            $this->sem_id = null;
+        }
         
         return $value;
     }

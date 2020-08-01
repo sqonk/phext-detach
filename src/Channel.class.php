@@ -25,10 +25,11 @@ Channel is a loose implentation of channels from the Go language. It provides a 
 A channel is a block-in, and (by default) a block-out mechanism, meaning that the task that sets a value will block until another task has received it.
 */
 
-
 class Channel
 {
     static private $storeLoc;
+    
+    private const CHAN_SIG_CLOSE = "#__CHAN-CLOSE__#";
     
 	public function __construct()
 	{
@@ -54,13 +55,50 @@ class Channel
     
     protected function cleanup()
     {
-        if (sem_acquire($this->sem_id))
+        if ($this->sem_id === null or @sem_acquire($this->sem_id))
         {
             if (file_exists($this->filepath) and detach_pid() == $this->createdByPID)
                 unlink($this->filepath);
-            if (! sem_release($this->sem_id))
+            if ($this->sem_id && ! sem_release($this->sem_id))
                dump_stack("## WARNING: Failed to release lock for {$this->key}");
         }
+    }
+    
+    // Close off the channel, signalling to the receiver that no further values will be sent.
+    public function close()
+    {
+        if (! $this->sem_id)
+            return;
+        /*
+            Rules:
+            - Wait for storage to be deleted before writing another value.
+            - Requires lock but NOT before prior value is deleted, else we'll deadlock.
+            - Write out new data.
+            - Release lock.
+        */
+        while (true)
+        {
+            if (@sem_acquire($this->sem_id))
+            {
+                try {
+                    if (! file_exists($this->filepath))
+                    {
+                        file_put_contents($this->filepath, serialize(self::CHAN_SIG_CLOSE));
+                        break;
+                    }
+                }
+                finally {
+                     if (! @sem_release($this->sem_id))
+                        dump_stack("## WARNING: Failed to release lock for {$this->key}");
+                } 
+                
+                usleep(TASK_WAIT_TIME); // wait until existing as been deleted.
+            }
+            else
+                dump_stack("## WARNING: Failed to aquire lock for {$this->key}, write failed.");
+        }
+        
+        $this->sem_id = null;
     }
 		
     /* 
@@ -69,6 +107,8 @@ class Channel
 	*/
     public function set($value) 
     {
+        if (! $this->sem_id)
+            return;
         /*
             Rules:
             - Wait for storage to be deleted before writing another value.
@@ -127,6 +167,9 @@ class Channel
 	*/
     public function get($wait = true) 
     {
+        if (! $this->sem_id)
+            return null;
+        
 		$value = null;
         $started = time();
         $waitTimeout = 0; 
@@ -170,6 +213,14 @@ class Channel
 
             usleep(TASK_WAIT_TIME); 
         }
+        
+        if ($value == self::CHAN_SIG_CLOSE)
+        {
+            $value = null;
+            @sem_remove($this->sem_id);
+            $this->sem_id = null;
+        }
+        
         return $value;
     }
 	

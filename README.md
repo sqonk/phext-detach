@@ -230,17 +230,25 @@ public function next($wait = true) // next
 
 Obtain the next value on the channel (if any). If `$wait` is `TRUE` then this method will block until a new value is received. Be aware that in this mode the method will block forever if no further values are sent from other tasks.
 
-If `$wait` is given as an integer of 1 or more then it is used as a timeout  in seconds. In such a case, if nothing is received before the timeout then a value of `TASK_CHANNEL_NO_DATA` will be returned.
+If `$wait` is given as an integer of 1 or more then it is used as a timeout  in seconds. In such a case, if nothing is received before the timeout then a value of `NULL` will be returned.
 
 `$wait` defaults to `TRUE`. 
+
+
+
+##### close
+
+```php
+public function close()
+```
+
+Close off the channel, signalling to the receiver that no further values will be sent.
 
 
 
 ### BufferedChannel
 
 A BufferedChannel is a queue of values that may be passed between tasks. Unlike a standard channel, it may continue to accept new values before any existing ones have been read in via another task.
-
-The queue is unordered, meaning that values may be read in in a different order from that of which they were put in.
 
 BufferedChannels are an effective bottle-necking system where data obtained from multiple tasks may need to be fed into a singular thread for post-processing.
 
@@ -258,7 +266,7 @@ $chan = new BufferedChannel;
 public function capacity(int $totalDeposits)
 ```
 
-Set an arbitrary limit on the number of times data will be read from the channel. Once the limit has been reached all subsequent reads will return FALSE.
+Set an arbitrary limit on the number of times data will be read from the channel. Once the limit has been reached all subsequent reads will return `NULL`.
 
 Every time this method is called it will reset the internal *read* count to 0.
 
@@ -293,6 +301,16 @@ Obtain the next value on the channel (if any). If `$wait` is `TRUE` then this me
 If `$wait` is given as an integer of 1 or more then it is used as a timeout  in seconds. In such a case, if nothing is received before the timeout then a value of `NULL` will be returned.
 
 `$wait` defaults to `TRUE`. 
+
+
+
+##### close
+
+```php
+public function close()
+```
+
+Close off the channel, signalling to the receiver that no further values will be sent.
 
 
 
@@ -421,7 +439,7 @@ foreach ($r as [$i, $rand])
 use sqonk\phext\detach\Dispatcher as dispatch;
 use sqonk\phext\detach\BufferedChannel;
 
-// generate 10 seperate tasks, all of which return a random number.
+// generate 10 seperate tasks, all of which return the number passed in + 5.
 $chan = new BufferedChannel;
 $chan->capacity(10); // we'll be waiting on a maximum of 10 inputs.
 

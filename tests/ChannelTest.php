@@ -115,4 +115,20 @@ class ChannelTest extends TestCase
         
         detach_kill();
     }
+    
+    public function testClose()
+    {
+        $cannon = function($chan) {
+            foreach (range(1, 5) as $i)
+                $chan->put($i);
+            $chan->close();
+        };
+        
+        $expected = range(1, 5);
+        $chan = new Channel;
+        detach($cannon, [$chan]);
+        
+        while ($r = $chan->next())
+            $this->assertSame($r, array_shift($expected));
+    }
 }
