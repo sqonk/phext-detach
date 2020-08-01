@@ -30,6 +30,8 @@ class BufferedChannelTest extends TestCase
         }
         
         $this->assertSame(count($input), $tally);
+        
+        detach_kill();
     }
     
     public function testClose()
@@ -46,5 +48,7 @@ class BufferedChannelTest extends TestCase
         
         while ($r = $chan->next())
             $this->assertSame($r, array_shift($expected));
+        
+        detach_kill();
     }
 }

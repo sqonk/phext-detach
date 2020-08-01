@@ -130,5 +130,7 @@ class ChannelTest extends TestCase
         
         while ($r = $chan->next())
             $this->assertSame($r, array_shift($expected));
+        
+        detach_kill();
     }
 }
