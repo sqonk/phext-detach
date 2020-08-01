@@ -11,4 +11,4 @@ install:
     - travis_retry composer update ${COMPOSER_FLAGS}
     
 script:
-  - vendor/bin/phpunit
+  - vendor/bin/phpunit --testdox tests
