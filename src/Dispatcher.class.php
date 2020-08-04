@@ -45,7 +45,7 @@ class Dispatcher
     {
         self::cleanup(); // remove any completed threads from the register.
         
-        if (! detach_pid() and ! self::$shutdownSet) {
+        if (detach_pid() == '_parent_' and ! self::$shutdownSet) {
             register_shutdown_function(function() {
                 detach_kill();
             });
@@ -68,6 +68,12 @@ class Dispatcher
     static public function map(iterable $data, callable $callback)
     {
         return new TaskMap($data, $callback);
+    }
+    
+    // Internal function.
+    static public function _clear()
+    {
+        self::$threads = [];
     }
     
     static private function cleanup()
@@ -157,7 +163,6 @@ class Dispatcher
         foreach (self::$threads as $t) {
             if ($t->isAlive())
                 $t->stop(SIGKILL, true);
-            $t->cleanup('child'); // remove any storage on the child side.
         }
         
         self::$threads = [];

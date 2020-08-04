@@ -77,6 +77,7 @@ class TaskMap
 
     protected function _runPool()
     {
+        Dispatcher::_clear(); // clear out all the ghosts.
         $tasks = [];
         $results = []; $pids = [];
         foreach ($this->data as $item)
@@ -124,6 +125,11 @@ class TaskMap
                     $pids[] = $t->pid();
                 }
             }
+        }
+        
+        foreach ($threads as $t) {
+            if ($t->isAlive())
+                $t->stop(SIGKILL, true);
         }
         
         return $results;
