@@ -135,6 +135,9 @@ class Task
 		{
             // parent process receives the pid.
             $this->pid = $pid;
+            $key = $this->key(self::pPARENT);
+            if (apcu_exists($key))
+                apcu_delete($key); // remove old data.
         }
         else 
 		{
