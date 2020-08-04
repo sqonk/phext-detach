@@ -199,8 +199,6 @@ class Task
                 $value = unserialize($value);
             apcu_delete($key);
         }
-        else
-            println($key, 'does not exist');
         
         return $value;
 	}
