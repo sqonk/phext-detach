@@ -74,7 +74,7 @@ class Channel
         while (! $written)
         {
             $this->_synchronised(function() use ($value, &$written) {
-                if (apcu_add($this->key, serialize($value)))
+                if (apcu_add($this->key, $value))
                     $written = true;
             });
             if (! $written)
@@ -124,7 +124,7 @@ class Channel
         
         /*
             - Wait until data is present.
-            - Aquire lock, but not before data is present.
+            - Aquire lock.
             - Read data, as long as someone else has not snuck in a got it since we got the lock.
             - Delete value
             - Release lock
@@ -139,7 +139,7 @@ class Channel
             {
                 $this->_synchronised(function() use (&$value, &$read) {
                     if (apcu_exists($this->key)) {
-                        $value = unserialize(apcu_fetch($this->key));
+                        $value = apcu_fetch($this->key);
                         apcu_delete($this->key);
                         $read = true;
                     }
