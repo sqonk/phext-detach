@@ -15,6 +15,7 @@ require '../vendor/autoload.php';
 */
 
 use sqonk\phext\detach\BufferedChannel;
+use sqonk\phext\core\numbers;
 
 function bet($cashLeft, $chan)
 {
@@ -23,7 +24,8 @@ function bet($cashLeft, $chan)
     {
         $bet = rand(1, $cashLeft);
         $cashLeft -= $bet;
-        if (rand(1, 100) < 21) {
+        $quadrant = rand(1,5);
+        if (numbers::is_within(rand(1, 100), $quadrant-1 * 20, $quadrant * 20)) {
             $winnings = ($bet * $odds);
             $cashLeft += $winnings;
             $chan->put([$bet, $winnings, $cashLeft]);
