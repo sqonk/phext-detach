@@ -24,8 +24,7 @@ use sqonk\phext\core\arrays;
 class Dispatcher
 {
     static private $threads = [];
-    
-    static protected $shutdownSet = false;
+    static private $shutdownSet = false;
         
 	/*
 		Execute the provided callback on a seperate process.

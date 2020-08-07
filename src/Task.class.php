@@ -49,6 +49,20 @@ class Task
     static protected $currentPID = '_parent_';
     static protected $rootPID;
     
+    static private $envPassed = false;
+    
+    static private function _checkRequirements()
+    {
+        if (! function_exists('pcntl_fork'))
+            throw new \RuntimeException("Detach requires the PCNTL extension to be installed and active.");
+        if (! function_exists('apcu_fetch'))
+            throw new \RuntimeException("Detach requires the APCu extension to be installed and active.");
+        if (php_sapi_name() == 'cli' && ini_get('apc.enable_cli') != 1)
+            throw new \RuntimeException("Detach requires the APCu be enabled for CLI usage (add apc.enable_cli to your php.ini).");
+    
+        self::$envPassed = true;
+    }
+    
     static public function rootPID()
     {
         if (! self::$rootPID)
@@ -134,6 +148,9 @@ class Task
     // Starts the child process, all the parameters are passed to the callback function.
     public function start(array $args = []) 
 	{	
+        if (! self::$envPassed)
+            self::_checkRequirements();
+        
 		$this->started = true; // flag the task has having begun.
         $pid = @pcntl_fork();
         if ($pid == -1) 
