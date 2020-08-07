@@ -29,9 +29,11 @@ $ composer require sqonk/phext-detach
 
 ## Updating from V0.3
 
-Release 0.4+ is a significant update from previous versions. *It may break existing code that was built to use V0.3.*
+Release 0.4+ is a significant update from previous versions. *It will break existing code that was built to use V0.3.*
 
 Most notably, the class that was formerly named `Channel` has been renamed to `BufferedChannel` and a new `Channel` class has taken its place. You can read more about both classes below.
+
+Also, later in development, the file-based data storage for transferring data between tasks was switched to APCu, now requiring the extension in addition to PCNTL. 
 
 
 
