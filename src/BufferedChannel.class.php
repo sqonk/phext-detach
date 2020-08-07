@@ -76,10 +76,12 @@ class BufferedChannel
     public function close()
     {
         if (! $this->open)
-            return;
+            return $this;
         
         $this->set(self::CHAN_SIG_CLOSE);
         $this->open = false;
+        
+        return $this;
     }
 	
     /* 
@@ -88,7 +90,7 @@ class BufferedChannel
     public function set($value) 
     { 
         if (! $this->open)
-            return;
+            return $this;
         /*
             Rules:
             - Require lock.

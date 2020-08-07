@@ -55,10 +55,12 @@ class Channel
     public function close()
     {
         if (! $this->open)
-            return;
+            return $this;
         
         $this->set(self::CHAN_SIG_CLOSE);
         $this->open = false;
+        
+        return $this;
     }
 		
     /* 
@@ -68,7 +70,7 @@ class Channel
     public function set($value) 
     {
         if (! $this->open)
-            return;
+            return $this;
         
         $written = false;
         while (! $written)
