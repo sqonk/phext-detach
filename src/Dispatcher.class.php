@@ -43,14 +43,7 @@ class Dispatcher
 	*/
     static public function detach(callable $callback, array $args = [])
     {
-        self::cleanup(); // remove any completed threads from the register.
-        
-        if (detach_pid() == '_parent_' and ! self::$shutdownSet) {
-            register_shutdown_function(function() {
-                detach_kill();
-            });
-            self::$shutdownSet = true;
-        }
+        self::cleanup(); // remove any completed threads from the register. 
         
         $t = new Task($callback);
 		self::$threads[] = $t; // add to the internal register to prevent GC.    

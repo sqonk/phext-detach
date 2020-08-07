@@ -31,6 +31,7 @@ class TaskMap
     protected $limit = 0;
     protected $params;
     protected $block = true;
+    //protected $tasks;
     
     protected $data;
     protected $callback;
@@ -74,82 +75,53 @@ class TaskMap
         $this->limit = $limit;
         return $this;
     }
-
+    
     protected function _runPool()
     {
-        Dispatcher::_clear(); // clear out all the ghosts.
-        $tasks = [];
-        $results = []; $pids = [];
+        // migrate the data to process over to a buffered channel that will feed the tasks.
+        $chan = new BufferedChannel;
         foreach ($this->data as $item)
+            $chan->put($item);
+        $chan->close();
+        
+        $outBuffer = new BufferedChannel;
+        $outBuffer->capacity(count($this->data));
+        
+        foreach (range(1, $this->limit) as $i)
         {
-            $params = is_array($item) ? $item : [$item];
-            if ($this->params)
-                $params = array_merge($params, $this->params);
-            
-            $tasks[] = Dispatcher::detach($this->callback, $params); 
-            if (count($tasks) >= $this->limit) 
-            {
-                // The concurrency pool is already at the desired limit,
-                // so wait for any of the currently running tasks to complete.
-                while (true)
-                {
-                    usleep(TASK_WAIT_TIME);
-                    foreach ($tasks as $i => $t) {
-                        if (! in_array($t->pid(), $pids) and $t->complete()) {
-                            $results[] = $t->result(); 
-                            $pids[] = $t->pid();
-                            $tasks[$i] = null;
-                            goto onedone;
-                        }
-                    }    
-                }  
+            Dispatcher::detach(function($feed, $out) {
                 
-                onedone: 
-                $tasks = arrays::compact($tasks);
-            }            
+                while ($item = $feed->next())
+                {
+                    $params = is_array($item) ? $item : [$item];
+                    if ($this->params)
+                        $params = array_merge($params, $this->params);
+        
+                    $r = ($this->callback)(...$params);
+                    $out->put($r);
+                }
+            }, 
+            [$chan, $outBuffer]);
         }
         
-        // wait for all tasks to complete.
-        $notdone = true;
-        while ($notdone)
+        if ($this->block)
         {
-            usleep(TASK_WAIT_TIME);
-            $notdone = false;
-            foreach ($tasks as $t) {
-                if (! $t->complete()) {
-                    $notdone = true;
-                    break;
-                }
-                else if (! in_array($t->pid(), $pids)) {
-                    $results[] = $t->result();
-                    $pids[] = $t->pid();
-                }
-            }
+            $results = [];
+            while ($r = $outBuffer->get())
+                $results[] = $r;
+            
+            return $results;
         }
         
-        foreach ($threads as $t) {
-            if ($t->isAlive())
-                $t->stop(SIGKILL, true);
-        }
-        
-        return $results;
+        return $outBuffer;
     }
-    
+
     // Begin the task map.
     public function start()
     {
         if ($this->limit > 0)
         {
-            if ($this->block)
-            {
-                return $this->_runPool();
-            }
-            else
-            {
-                Dispatcher::detach(function() {
-                    return $this->_runPool();
-                });
-            }
+            return $this->_runPool();
         }
         else
         {
@@ -162,9 +134,9 @@ class TaskMap
             
                 $tasks[] = Dispatcher::detach($this->callback, $params);               
             }
-            
             if ($this->block)
                 return Dispatcher::wait($tasks);
+            return $tasks;
         }
     }
 }

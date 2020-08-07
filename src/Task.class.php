@@ -67,11 +67,19 @@ class Task
         	$this->setRunnable($callback);
         
         self::rootPID(); // ensure the root PID is set before we spawn.
+        
+        $this->uuid = uniqid(true);
+        
+        $child = $this->key(self::pCHILD);
+        $parent = $this->key(self::pPARENT);
+        foreach ([$parent, $child, "$parent.lock", "$child.lock"] as $key)
+            if (apcu_exists($key)) 
+                apcu_delete($key);
     }
 
     protected function key($suffix)
     {
-        return "TASKID-{$this->pid}_$suffix";
+        return "TASKID-{$this->pid}-{$this->uuid}_$suffix";
     }
 	
 	// Get or set the callback for the child process to run.
@@ -136,8 +144,6 @@ class Task
             // parent process receives the pid.
             $this->pid = $pid;
             $key = $this->key(self::pPARENT);
-            if (apcu_exists($key))
-                apcu_delete($key); // remove old data.
         }
         else 
 		{
@@ -156,21 +162,42 @@ class Task
                     apcu_delete($key); // remove any store data destined for the child.
             });
             
-			if ($resp = $this->run(...$args)) 
-				$this->sendToParent($resp);
+            $r = $this->run(...$args); //println('send to parent');
+			$this->sendToParent($r);
 			
             exit;
         }
+    }
+    
+    protected function _synchronised($suffix, $callback)
+    {
+        $lock = $this->key($suffix).".lock";
+        $pid = self::$currentPID; 
+        while (apcu_fetch($lock) != $pid)
+        {  
+            if (! apcu_add($lock, $pid))
+                usleep(TASK_WAIT_TIME);
+        }
+        
+        $callback();
+        
+        apcu_delete($lock);
     }
 	
 	// Send data to the desired process (parent or child).
 	protected function write($suffix, $data)
 	{
-		$data = serialize($data);
-		$key = $this->key($suffix);
-		
-		if (! apcu_store($key, $data))
-			throw new \RuntimeException("Failed to write to task store for '$key'");
+        $written = false;
+        $key = $this->key($suffix);
+        while (! $written)
+        {
+            $this->_synchronised($suffix, function() use ($suffix, &$written, $data, $key) {
+                if (apcu_add($key, $data, 0))
+                    $written = apcu_exists($key);
+            });
+            if (! $written)
+                usleep(TASK_WAIT_TIME);
+        }
 	}
 	
 	// Called from child.
@@ -191,13 +218,28 @@ class Task
 	{
 		$key = $this->key($suffix);
         $value = '';
-		if (apcu_exists($key)) {
-            $value = apcu_fetch($key, $ok);
-            if (! $ok)
-                throw new \RuntimeException("Failed to read task store for '$key'");
-            else
-                $value = unserialize($value);
-            apcu_delete($key);
+        
+        $read = false;
+        while (! $read)
+        {
+            if (apcu_exists($key))
+            {
+                $ok = true;
+                $this->_synchronised($suffix, function() use (&$value, &$read, $key, &$ok) { 
+                    if (apcu_exists($key)) { 
+                        $value = apcu_fetch($key, $ok); 
+                        if ($ok) { 
+                            apcu_delete($key);
+                            $read = true;
+                        }
+                    }
+                });
+                if (! $ok)
+                    throw new \RuntimeException("Failed to read task store for '$key'");
+            }
+            
+            if (! $read)
+                usleep(TASK_WAIT_TIME); 
         }
         
         return $value;
