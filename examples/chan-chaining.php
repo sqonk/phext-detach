@@ -34,3 +34,6 @@ foreach (range(0, 9) as $i)
     detach ('filter', [$ch, $ch1, $prime]);
     $ch = $ch1;
 }
+
+// Because this example spawns off many tasks that never exit we need to force the closure of them.
+detach_kill();
