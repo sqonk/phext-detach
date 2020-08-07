@@ -13,13 +13,27 @@ class TaskMapTest extends TestCase
         $map = Dispatcher::map($range, function($i) {
         	return $i;
         });
-        if ($limit)
-            $map->limit($limit);
         $map->block($block);
-        
-        $results = $map->start();
-        if (! $block)
-            $results = detach_wait();
+        if ($limit)
+        {
+            $map->limit($limit);
+            if ($block)
+                $results = $map->start();
+            else
+            {
+                $chan = $map->start();
+                $results = [];
+                while ($r = $chan->next())
+                    $results[] = $r;
+            }
+        }
+        else
+        {
+            $results = $map->start();
+            if (! $block)
+                $results = detach_wait();
+        }   
+            
         $this->assertSame(count($range), count($results));
         foreach ($results as $r) {
             $this->assertContains($r, $range);
@@ -27,7 +41,6 @@ class TaskMapTest extends TestCase
                 return $v != $r;
             });
         }
-            
         
         detach_kill(); 
     }

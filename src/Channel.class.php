@@ -26,79 +26,39 @@ A channel is a block-in, and (by default) a block-out mechanism, meaning that th
 */
 
 class Channel
-{
-    static private $storeLoc;
-    
+{    
     private const CHAN_SIG_CLOSE = "#__CHAN-CLOSE__#";
+    private $open = true;
     
 	public function __construct()
 	{
-        if (! self::$storeLoc) {
-            if (! self::$storeLoc = sys_get_temp_dir())
-                self::$storeLoc = __DIR__.'/.tmp';
-        }
-        
         $this->key = "CHANID-".uniqid();
-        $this->filepath = self::$storeLoc."/{$this->key}";
-        $this->sem_id = sem_get(ftok(__FILE__, 'l'));
-        
-        $this->createdByPID = detach_pid();
-        register_shutdown_function(function() {
-            $this->cleanup();
-        });
 	}
 
-    public function __destruct()
+
+    protected function _synchronised($callback)
     {
-        $this->cleanup();
-    }
-    
-    protected function cleanup()
-    {
-        if ($this->sem_id === null or @sem_acquire($this->sem_id))
-        {
-            if (file_exists($this->filepath) and detach_pid() == $this->createdByPID)
-                unlink($this->filepath);
-            if ($this->sem_id && ! sem_release($this->sem_id))
-               dump_stack("## WARNING: Failed to release lock for {$this->key}");
+        $lock = "{$this->key}.lock";
+        $pid = detach_pid();
+        while (apcu_fetch($lock) != $pid)
+        { 
+            if (! apcu_add($lock, $pid))
+                usleep(TASK_WAIT_TIME);
         }
+        
+        $callback();
+        
+        apcu_delete($lock);
     }
     
     // Close off the channel, signalling to the receiver that no further values will be sent.
     public function close()
     {
-        if (! $this->sem_id)
+        if (! $this->open)
             return;
-        /*
-            Rules:
-            - Wait for storage to be deleted before writing another value.
-            - Requires lock but NOT before prior value is deleted, else we'll deadlock.
-            - Write out new data.
-            - Release lock.
-        */
-        while (true)
-        {
-            if (@sem_acquire($this->sem_id))
-            {
-                try {
-                    if (! file_exists($this->filepath))
-                    {
-                        file_put_contents($this->filepath, serialize(self::CHAN_SIG_CLOSE));
-                        break;
-                    }
-                }
-                finally {
-                     if (! @sem_release($this->sem_id))
-                        dump_stack("## WARNING: Failed to release lock for {$this->key}");
-                } 
-                
-                usleep(TASK_WAIT_TIME); // wait until existing as been deleted.
-            }
-            else
-                dump_stack("## WARNING: Failed to aquire lock for {$this->key}, write failed.");
-        }
         
-        $this->sem_id = null;
+        $this->set(self::CHAN_SIG_CLOSE);
+        $this->open = false;
     }
 		
     /* 
@@ -107,40 +67,24 @@ class Channel
 	*/
     public function set($value) 
     {
-        if (! $this->sem_id)
+        if (! $this->open)
             return;
-        /*
-            Rules:
-            - Wait for storage to be deleted before writing another value.
-            - Requires lock but NOT before prior value is deleted, else we'll deadlock.
-            - Write out new data.
-            - Release lock, then wait until some other task has read & deleted the value.
-        */
-        while (true)
+        
+        $written = false;
+        while (! $written)
         {
-            if (sem_acquire($this->sem_id))
-            {
-                try {
-                    if (! file_exists($this->filepath))
-                    {
-                        file_put_contents($this->filepath, serialize($value));
-                        break;
-                    }
-                }
-                finally {
-                     if (! sem_release($this->sem_id))
-                        dump_stack("## WARNING: Failed to release lock for {$this->key}");
-                } 
-                
-                usleep(TASK_WAIT_TIME); // wait until existing as been deleted.
-            }
-            else
-                dump_stack("## WARNING: Failed to aquire lock for {$this->key}, write failed.");
+            $this->_synchronised(function() use ($value, &$written) {
+                if (apcu_add($this->key, $value))
+                    $written = true;
+            });
+            if (! $written)
+                usleep(TASK_WAIT_TIME); 
         }
         
+        
         // Wait for the value to be read by something else.
-        while (file_exists($this->filepath)) {
-            usleep(TASK_WAIT_TIME); // wait until existing as been deleted.    
+        while (apcu_exists($this->key)) {
+            usleep(TASK_WAIT_TIME);    
         }
 
         return $this;
@@ -167,7 +111,7 @@ class Channel
 	*/
     public function get($wait = true) 
     {
-        if (! $this->sem_id)
+        if (! $this->open)
             return null;
         
 		$value = null;
@@ -180,45 +124,37 @@ class Channel
         
         /*
             - Wait until data is present.
-            - Aquire lock, but not before data is present.
-            - Read data
+            - Aquire lock.
+            - Read data, as long as someone else has not snuck in a got it since we got the lock.
             - Delete value
             - Release lock
         */
-        while (true)
+        $read = false;
+        while (! $read)
         {
             if ($waitTimeout > 0 and time()-$started >= $waitTimeout)
                 break;
             
-            if (sem_acquire($this->sem_id, ! $wait))
+            if (apcu_exists($this->key))
             {
-                try {
-                    if (file_exists($this->filepath))
-                    {
-                        $value = unserialize(@file_get_contents($this->filepath));
-                        unlink($this->filepath);   
-                        break;
+                $this->_synchronised(function() use (&$value, &$read) {
+                    if (apcu_exists($this->key)) {
+                        $value = apcu_fetch($this->key);
+                        apcu_delete($this->key);
+                        $read = true;
                     }
-        			else if (! $wait)
-        				break;
-                }
-                finally {
-                    if (! sem_release($this->sem_id))
-                        dump_stack("## WARNING: Failed to release lock for {$this->key}");
-                }
-                usleep(TASK_WAIT_TIME); // wait until existing as been deleted.
+                });
             }
-            else if ($wait)
-                dump_stack("## WARNING: Failed to aquire lock for {$this->key}, write failed.");
-
-            usleep(TASK_WAIT_TIME); 
+            if (! $wait)
+                $read = true;
+            if (! $read)
+                usleep(TASK_WAIT_TIME); 
         }
         
         if ($value == self::CHAN_SIG_CLOSE)
         {
             $value = null;
-            @sem_remove($this->sem_id);
-            $this->sem_id = null;
+            $this->open = false;
         }
         
         return $value;

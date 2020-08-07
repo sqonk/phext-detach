@@ -9,6 +9,7 @@ function gen($chan)
         println("in $i");
         $chan->put($i);
     }
+    $chan->close();
 }
 
 $input = range(1, 10);
@@ -16,6 +17,6 @@ $input = range(1, 10);
 $chan = new Channel;
 detach ('gen', [$chan]);
 
-while ($r = $chan->next(2)) { 
+while ($r = $chan->next()) { 
     println("out $r");
 }

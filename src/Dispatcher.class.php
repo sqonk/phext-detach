@@ -43,14 +43,7 @@ class Dispatcher
 	*/
     static public function detach(callable $callback, array $args = [])
     {
-        self::cleanup(); // remove any completed threads from the register.
-        
-        if (! detach_pid() and ! self::$shutdownSet) {
-            register_shutdown_function(function() {
-                detach_kill();
-            });
-            self::$shutdownSet = true;
-        }
+        self::cleanup(); // remove any completed threads from the register. 
         
         $t = new Task($callback);
 		self::$threads[] = $t; // add to the internal register to prevent GC.    
@@ -68,6 +61,12 @@ class Dispatcher
     static public function map(iterable $data, callable $callback)
     {
         return new TaskMap($data, $callback);
+    }
+    
+    // Internal function.
+    static public function _clear()
+    {
+        self::$threads = [];
     }
     
     static private function cleanup()
@@ -157,7 +156,6 @@ class Dispatcher
         foreach (self::$threads as $t) {
             if ($t->isAlive())
                 $t->stop(SIGKILL, true);
-            $t->cleanup('child'); // remove any storage on the child side.
         }
         
         self::$threads = [];

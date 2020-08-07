@@ -30,45 +30,32 @@ use sqonk\phext\core\strings;
 
 class BufferedChannel
 {
-	protected $commID; // unique key for data storage of the channel. 
 	protected $capacity;
 	protected $readCount = 0;
+    protected $open = true;
     
-    private const BOUNDARY = "#___CHANITEMBOUNDARY___#";
     private const CHAN_SIG_CLOSE = "#__CHAN-CLOSE__#";
     
     static private $storeLoc;
 				
 	public function __construct()
 	{
-        if (! self::$storeLoc) {
-            if (! self::$storeLoc = sys_get_temp_dir())
-                self::$storeLoc = __DIR__.'/.tmp';
-        }
 		$this->key = 'BCHAN-'.uniqid();
-        $this->filepath = self::$storeLoc."/{$this->key}";
-        $this->sem_id = sem_get(ftok(__FILE__, 'l'));
-        
-        $this->createdByPID = detach_pid();
-        register_shutdown_function(function() {
-            $this->cleanup();
-        });
 	}
     
-    public function __destruct()
+    protected function _synchronised($callback)
     {
-        $this->cleanup();
-    }
-    
-    protected function cleanup()
-    {
-        if ($this->sem_id === null or @sem_acquire($this->sem_id))
-        {
-            if (file_exists($this->filepath) and detach_pid() == $this->createdByPID)
-                unlink($this->filepath);
-            if ($this->sem_id && ! @sem_release($this->sem_id))
-               dump_stack("## WARNING: Failed to release lock for {$this->key}");
+        $lock = "{$this->key}.lock";
+        $pid = detach_pid();
+        while (apcu_fetch($lock) != $pid)
+        { 
+            if (! apcu_add($lock, $pid))
+                usleep(TASK_WAIT_TIME);
         }
+        
+        $callback();
+        
+        apcu_delete($lock);
     }
 	
 	/*
@@ -88,8 +75,11 @@ class BufferedChannel
     // Close off the channel, signalling to the receiver that no further values will be sent.
     public function close()
     {
+        if (! $this->open)
+            return;
+        
         $this->set(self::CHAN_SIG_CLOSE);
-        $this->sem_id = null;
+        $this->open = false;
     }
 	
     /* 
@@ -97,7 +87,7 @@ class BufferedChannel
 	*/
     public function set($value) 
     { 
-        if (! $this->sem_id)
+        if (! $this->open)
             return;
         /*
             Rules:
@@ -105,30 +95,18 @@ class BufferedChannel
             - Append new data.
             - Release lock.
         */
-        while (true)
+        $written = false;
+        while (! $written)
         {
-            if (sem_acquire($this->sem_id))
-            {
-                try {
-                    $fh = fopen($this->filepath, 'a');
-                    flock($fh, LOCK_EX);
-                    fwrite($fh, serialize($value).self::BOUNDARY);
-                    
-                    break;
-                }
-                finally {
-                    if (isset($fh)) {
-                        flock($fh, LOCK_UN);
-                        fclose($fh);
-                    }
-                     if (! sem_release($this->sem_id))
-                        dump_stack("## WARNING: Failed to release lock for {$this->key}");
-                } 
+            $this->_synchronised(function() use ($value, &$written) {
+                $data = apcu_exists($this->key) ? apcu_fetch($this->key) : [];
+                $data[] = $value;
                 
-                usleep(TASK_WAIT_TIME); // wait until existing as been deleted.
-            }
-            else
-                dump_stack("## WARNING: Failed to aquire lock for {$this->key}, write failed.");
+                if (apcu_store($this->key, $data))
+                    $written = true;
+            });
+            if (! $written)
+                usleep(TASK_WAIT_TIME); 
         }
                 
         return $this;
@@ -158,7 +136,7 @@ class BufferedChannel
 	*/
     public function get($wait = true) 
     {
-		if ($this->capacity !== null and $this->readCount >= $this->capacity || ! $this->sem_id)
+		if ($this->capacity !== null and $this->readCount >= $this->capacity || ! $this->open)
 			return null;
 		
 		$value = null;
@@ -168,66 +146,46 @@ class BufferedChannel
             $waitTimeout = $wait;
             $wait = true;
         }
-		
-		while (true)
-		{
+        
+        /*
+            - Wait until data is present.
+            - Aquire lock.
+            - Read data, as long as someone else has not snuck in a got it since we got the lock.
+            - Delete value
+            - Release lock
+        */
+        $read = false;
+        while (! $read)
+        {
             if ($waitTimeout > 0 and time()-$started >= $waitTimeout)
                 break;
             
-            if (@sem_acquire($this->sem_id))
+            if (apcu_exists($this->key))
             {
-                $delete = false;
-                try {
-                    if (file_exists($this->filepath))
-                    {
-                        $size = filesize($this->filepath);
-                        if ($size > 0)
-                        {
-                            $fh = fopen($this->filepath, 'r+');
-                            flock($fh, LOCK_EX);
-                            $contents = fread($fh, $size);
-                            $boundpos = strpos($contents, self::BOUNDARY);
-                            $value = substr($contents, 0, $boundpos);
-                            $contents = substr($contents, $boundpos + strlen(self::BOUNDARY));
-                        
-                            $len = strlen($contents);
-                            if ($len > 0)
-                            {
-                                rewind($fh);
-                                fwrite($fh, $contents);
-                                ftruncate($fh, $len);
+                $this->_synchronised(function() use (&$value, &$read) {
+                    if (apcu_exists($this->key)) { 
+                        $values = apcu_fetch($this->key); 
+                        if (count($values) > 0) {
+                            $value = array_shift($values); 
+                            if ($value != self::CHAN_SIG_CLOSE) {
+                                apcu_store($this->key, $values); // re-insert the shortened array.
                             }
-                            else
-                                $delete = true;
-                        
-                            $value = unserialize($value);
-                            $this->readCount++; 
-                            break;
+                            $read = true;
+                            $this->readCount++;
                         }
                     }
-                }
-                finally {
-                    if (isset($fh) && is_resource($fh)) {
-                        flock($fh, LOCK_UN);
-                        fclose($fh);
-                    }
-                    if ($delete)
-                        unlink($this->filepath); // contents reduced to 0.
-                    sem_release($this->sem_id);
-                }    
+                });
             }
-            
-			if (! $wait)
-				break;
-			
-			usleep(TASK_WAIT_TIME); 
-		}
+            if (! $wait)
+                $read = true;
+            if (! $read)
+                usleep(TASK_WAIT_TIME); 
+        }
         
         if ($value == self::CHAN_SIG_CLOSE)
         {
             $value = null;
-            @sem_remove($this->sem_id);
-            $this->sem_id = null;
+            $this->open = false;
         }
         
         return $value;
