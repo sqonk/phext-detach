@@ -6,6 +6,8 @@ php:
 env:
     matrix:
         - COMPOSER_FLAGS="--prefer-lowest"
+
+before_install: phpenv config-add tests/travis.ini
         
 install:
     - travis_retry composer update ${COMPOSER_FLAGS}
