@@ -365,12 +365,12 @@ public function start() : mixed
 
 Begin execution of the tasks.
 
-Returns:
+Depending on how you have configured the map it will return the following:
 
-- No Pool Limit / Blocking Mode: An array of all data returned from each task.
-- No Pool Limit / Non-blocking mode: An array of spawned tasks.
-- Pool Limit / Blocking mode: An array of all data returned from each task.
-- Pool Limit / Non-blocking mode: A BufferedChannel that will receive the data returned from each task. The channel will automatically close when all items given to the map have been processed.
+- *When no pool limit and in blocking mode:* An array of all data returned from each task.
+- *When no pool limit and in non-blocking mode:* An array of spawned tasks.
+- *When a pool limit is set and in blocking mode:* An array of all data returned from each task.
+- *When a pool limit is set and in non-blocking mode:* A BufferedChannel that will receive the data returned from each task. The channel will automatically close when all items given to the map have been processed.
 
 
 
@@ -434,16 +434,17 @@ foreach ($r as [$i, $rand])
 use sqonk\phext\detach\Dispatcher as dispatch;
 use sqonk\phext\detach\BufferedChannel;
 
-// generate 10 seperate tasks, all of which return the number passed in + 5.
-$chan = new BufferedChannel;
-$chan->capacity(10); // we'll be waiting on a maximum of 10 inputs.
-
-$cb = function($i, $chan) {
+function addFive($i, $chan) 
+{
   usleep(rand(100, 1000));
 	$chan->put([$i, $i+5]);
 };
 
-dispatch::map(range(1, 10), $cb)->limit(3)->block(false)->params($chan)->start();
+// generate 10 seperate tasks, all of which return the number passed in + 5.
+$chan = new BufferedChannel;
+$chan->capacity(10); // we'll be waiting on a maximum of 10 inputs.
+
+dispatch::map(range(1, 10), 'addFive')->limit(3)->block(false)->params($chan)->start();
 
 // wait for all tasks to complete and then print each result.	
 while ($r = $chan->get(2))
