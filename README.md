@@ -195,11 +195,11 @@ $chan = new Channel;
 ##### set / put
 
 ```php
-public function set($value)
+public function set($value) : Channel
 ```
 
 ```php
-public function put($value) // alias
+public function put($value) : Channel // alias
 ```
 
 Push a new value through the channel. The calling task will block until another task has received the value.
@@ -209,11 +209,11 @@ Push a new value through the channel. The calling task will block until another 
 ##### get / next
 
 ```php
-public function get($wait = true) 
+public function get($wait = true) : Channel
 ```
 
 ```php
-public function next($wait = true) // next
+public function next($wait = true) : Channel // next
 ```
 
 Obtain the next value on the channel (if any). If `$wait` is `TRUE` then this method will block until a new value is received. Be aware that in this mode the method will block forever if no further values are sent from other tasks.
@@ -227,7 +227,7 @@ If `$wait` is given as an integer of 1 or more then it is used as a timeout  in 
 ##### close
 
 ```php
-public function close()
+public function close() : Channel
 ```
 
 Close off the channel, signalling to the receiver that no further values will be sent.
@@ -251,7 +251,7 @@ $chan = new BufferedChannel;
 ##### capacity
 
 ```php
-public function capacity(int $totalDeposits)
+public function capacity(int $totalDeposits) : BufferedChannel
 ```
 
 Set an arbitrary limit on the number of times data will be read from the channel. Once the limit has been reached all subsequent reads will return `NULL`.
@@ -263,11 +263,11 @@ Every time this method is called it will reset the internal *read* count to 0.
 ##### set / put
 
 ```php
-public function set($value)
+public function set($value) : BufferedChannel
 ```
 
 ```php
-public function put($value) // alias
+public function put($value) : BufferedChannel // alias
 ```
 
 Queue a new value onto the channel, causing all waiting readers to wake up.
@@ -277,11 +277,11 @@ Queue a new value onto the channel, causing all waiting readers to wake up.
 ##### get / next
 
 ```php
-public function get($wait = true) 
+public function get($wait = true) : mixed
 ```
 
 ```php
-public function next($wait = true) // next
+public function next($wait = true) : mixed // next
 ```
 
 Obtain the next value on the channel (if any). If `$wait` is `TRUE` then this method will block until a new value is received. Be aware that in this mode the method will block forever if no further values are sent from other tasks.
@@ -295,7 +295,7 @@ If `$wait` is given as an integer of 1 or more then it is used as a timeout  in 
 ##### close
 
 ```php
-public function close()
+public function close() : BufferedChannel
 ```
 
 Close off the channel, signalling to the receiver that no further values will be sent.
@@ -368,9 +368,9 @@ Begin execution of the tasks.
 Returns:
 
 - No Pool Limit / Blocking Mode: An array of all data returned from each task.
-- No Pool Limit / Non-blocking mode: Returns the array of spawned tasks.
+- No Pool Limit / Non-blocking mode: An array of spawned tasks.
 - Pool Limit / Blocking mode: An array of all data returned from each task.
-- Pool Limit / Non-blocking mode: A BufferedChannel that will receive the data returned from each task. The channel will automatically close when all items given the map have been processed.
+- Pool Limit / Non-blocking mode: A BufferedChannel that will receive the data returned from each task. The channel will automatically close when all items given to the map have been processed.
 
 
 
