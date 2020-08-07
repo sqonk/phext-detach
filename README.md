@@ -1,11 +1,11 @@
 # PHEXT Detach
 
 [![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%207.3-8892BF.svg)](https://php.net/)
-[![License](https://sqonk.com/opensource/license.svg)](license.txt) [![Build Status](https://travis-ci.org/sqonk/phext-detach.svg?branch=master)](https://travis-ci.org/sqonk/phext-detach)
+[![License](https://sqonk.com/opensource/license.svg)](license.txt) [![Build Status](https://travis-ci.org/sqonk/phext-detach.svg?branch=0.4)](https://travis-ci.org/sqonk/phext-detach)
 
 Detach is a libary for running tasks inside of a PHP script in parallel using forked processes, ideally targetting CPU-bound processing. It clones a seperate process (based on the parent) and executes the requested callback. 
 
-It is light weight and relies on little else other than the PCNTL PHP extension and a minor set of composer packages.
+It is light weight and relies on little more than the PCNTL and APCu PHP extensions plus a minor set of composer packages.
 
 Detach is also minimalist in nature with just a small set of functions and classes to memorise. There is no event system and no architecture to learn, allowing it to fit easily within an existing code structure. 
 
@@ -14,32 +14,6 @@ See the [examples](#examples) for a quick start guide.
 While the spawned tasks have the ability to return data back to the parent there is also the option of using Channels, a loose implementation of channels from the Go language, which provide a simple way of allowing independent processes to send and receive data between one another.
 
 Channels can also be used as logic gates for controlling the execution of various tasks by forcing them to wait for incoming data where required.
-
-#### Communicating between tasks 
-
-###### (Implementation details)
-
-Data transfer between seperate processes takes place via a file-storage system, defaulting to PHPs temporary directory and falling back to the directory of the running script if the former is not specified in the PHP config.
-
-Semaphores are used internally to control synchronisation between tasks.
-
-Multiple methods for data transfer were explored and while other options such as shared memory segments were undoubtedly faster, file storage was found to be the most reliable. 
-
-Depending on what Detach is being used for but assuming it is largely CPU work, the impact of moving data  via the disk should be minimal, certainly with modern SSD drives.
-
-
-
-#### Alternatives
-
-The solution provided in this library is nothing new. It is a modernised, rewritten and extended version of the "Thread" class originally written by Tudor Barbu. 
-
-Detach is *not* an asynchronous or event-driven IO framework. [ReactPHP](https://reactphp.org) and [Amp](https://amphp.org) both provide comprehensive solutions in this space.
-
-If you have the ability to install PECL extensions there is a native concurrency extension for PHP 7.2+ called [Parallel](https://github.com/krakjoe/parallel) .
-
-The [spatie/async](https://github.com/spatie/async) library provides an alternative solution that also uses PCNTL forking but with an API and structure that may be more familiar to many developers.
-
-Finally, there is also the [Worker Pool](https://packagist.org/packages/qxsch/worker-pool) package.
 
 
 
@@ -51,6 +25,16 @@ Via Composer
 $ composer require sqonk/phext-detach
 ```
 
+
+
+## Updating from V0.3
+
+Release 0.4+ is a significant update from previous versions. *It may break existing code that was built to use V0.3.*
+
+Most notably, the class that was formerly named `Channel` has been renamed to `BufferedChannel` and a new `Channel` class has taken its place. You can read more about both classes below.
+
+
+
 Method/Class Index
 ------------
 
@@ -60,6 +44,8 @@ Method/Class Index
 - [BufferedChannel](#bufferedchannel)
 - [TaskMap](#taskmap)
 - [Examples](#examples)
+
+
 
 Available Methods
 -----------------
@@ -372,10 +358,17 @@ The default is 0 (unlimited).
 ##### start
 
 ```php
-public function start()
+public function start() : mixed
 ```
 
 Begin execution of the tasks.
+
+Returns:
+
+- No Pool Limit / Blocking Mode: An array of all data returned from each task.
+- No Pool Limit / Non-blocking mode: Returns the array of spawned tasks.
+- Pool Limit / Blocking mode: An array of all data returned from each task.
+- Pool Limit / Non-blocking mode: A BufferedChannel that will receive the data returned from each task. The channel will automatically close when all items given the map have been processed.
 
 
 
@@ -535,3 +528,17 @@ Please see original concept of pnctl Threading by Tudor Barbu @ <a href="https:/
 ## License
 
 The MIT License (MIT). Please see [License File](license.txt) for more information.
+
+
+
+## Alternatives
+
+The solution provided in this library is nothing new. It is a modernised, rewritten and extended version of the "Thread" class originally written by Tudor Barbu. 
+
+Detach is *not* an asynchronous or event-driven IO framework. [ReactPHP](https://reactphp.org) and [Amp](https://amphp.org) both provide comprehensive solutions in this space.
+
+If you have the ability to install PECL extensions there is a native concurrency extension for PHP 7.2+ called [Parallel](https://github.com/krakjoe/parallel) .
+
+The [spatie/async](https://github.com/spatie/async) library provides an alternative solution that also uses PCNTL forking but with an API and structure that may be more familiar to many developers.
+
+Finally, there is also the [Worker Pool](https://packagist.org/packages/qxsch/worker-pool) package.
