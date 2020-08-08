@@ -1,4 +1,21 @@
 <?php
+/**
+*
+* Threading
+* 
+* @package		phext
+* @subpackage	detach
+* @version		1
+* 
+* @license		MIT see license.txt
+* @copyright	2019 Sqonk Pty Ltd.
+*
+*
+* This file is distributed
+* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+* express or implied. See the License for the specific language governing
+* permissions and limitations under the License.
+*/
 require '../vendor/autoload.php';
 
 /*
@@ -8,7 +25,7 @@ require '../vendor/autoload.php';
 
     The example is an overly simplified gambling table where
     a gambler starts off with a set amount and continues to 
-    place bets with winnings of 2 * the bet amount and 
+    place bets with winnings of 2 x the bet amount and a
     winning ratio of 20%.
 
     Once the cash reaches 0 the gambler goes bust.

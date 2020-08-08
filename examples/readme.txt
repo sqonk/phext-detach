@@ -1,0 +1,1 @@
+These examples are designed to be run from the command line. To run them copy this folder to the top level of your project.

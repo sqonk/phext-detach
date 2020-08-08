@@ -1,8 +1,33 @@
 <?php
+/**
+*
+* Threading
+* 
+* @package		phext
+* @subpackage	detach
+* @version		1
+* 
+* @license		MIT see license.txt
+* @copyright	2019 Sqonk Pty Ltd.
+*
+*
+* This file is distributed
+* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+* express or implied. See the License for the specific language governing
+* permissions and limitations under the License.
+*/
 require '../vendor/autoload.php';
 
 use sqonk\phext\detach\Dispatcher as dispatch;
 use sqonk\phext\detach\BufferedChannel;
+
+/*
+    Generate 100 seperate tasks, each sleeping for a random period of time
+    before pushing the number passed to it, back out to the channel.
+
+    This examples demonstrates that even with a high number of threads, 
+    the system should reliably output the same number of results.
+*/
 
 $input = range(1, 100);
 
