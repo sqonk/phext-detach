@@ -3,7 +3,7 @@
 [![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%207.3-8892BF.svg)](https://php.net/)
 [![License](https://sqonk.com/opensource/license.svg)](license.txt) [![Build Status](https://travis-ci.org/sqonk/phext-detach.svg?branch=0.4)](https://travis-ci.org/sqonk/phext-detach)
 
-Detach is a libary for running tasks inside of a PHP script in parallel using forked processes, ideally targetting CPU-bound processing. It clones a seperate process (based on the parent) and executes the requested callback. 
+Detach is a library for running tasks inside of a PHP script in parallel using forked processes. It clones a seperate process (based on the parent) and executes the requested callback. 
 
 It is light weight and relies on little more than the PCNTL and APCu PHP extensions plus a minor set of composer packages.
 
