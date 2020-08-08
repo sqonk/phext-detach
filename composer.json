@@ -7,7 +7,7 @@
 		"ext-pcntl": "*",
         "sqonk/phext-core": "^0.3.2"
     },
-	"keywords": ["pcntl","parallel","multitasking","threading"],
+	"keywords": ["pcntl","parallel","multitasking","multi-tasking","threading"],
     "license": "MIT",
     "authors": [
         {
