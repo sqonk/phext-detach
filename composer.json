@@ -7,7 +7,7 @@
 		"ext-pcntl": "*",
         "sqonk/phext-core": "^0.3.2"
     },
-	"keywords": ["pcntl","parallel","multitasking","threading"],
+	"keywords": ["pcntl","parallel","multitasking","multi-tasking","threading"],
     "license": "MIT",
     "authors": [
         {
@@ -21,9 +21,11 @@
             "src/TaskMap.class.php", 
 			"src/Dispatcher.class.php", 
 			"src/Channel.class.php", 
+            "src/BufferedChannel.class.php", 
 			"src/global_functions.php"
 		]
     },
     "require-dev": {
+        "phpunit/phpunit": "^9"
     }
 }

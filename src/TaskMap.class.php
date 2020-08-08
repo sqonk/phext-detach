@@ -19,6 +19,8 @@ namespace sqonk\phext\detach;
 * permissions and limitations under the License.
 */
 
+use sqonk\phext\core\arrays;
+
 /*
     The TaskMap class maps an array of elements each unto their own
     seperate task.
@@ -29,6 +31,7 @@ class TaskMap
     protected $limit = 0;
     protected $params;
     protected $block = true;
+    //protected $tasks;
     
     protected $data;
     protected $callback;
@@ -73,34 +76,52 @@ class TaskMap
         return $this;
     }
     
+    protected function _runPool()
+    {
+        // migrate the data to process over to a buffered channel that will feed the tasks.
+        $chan = new BufferedChannel;
+        foreach ($this->data as $item)
+            $chan->put($item);
+        $chan->close();
+        
+        $outBuffer = new BufferedChannel;
+        $outBuffer->capacity(count($this->data));
+        
+        foreach (range(1, $this->limit) as $i)
+        {
+            Dispatcher::detach(function($feed, $out) {
+                
+                while ($item = $feed->next())
+                {
+                    $params = is_array($item) ? $item : [$item];
+                    if ($this->params)
+                        $params = array_merge($params, $this->params);
+        
+                    $r = ($this->callback)(...$params);
+                    $out->put($r);
+                }
+            }, 
+            [$chan, $outBuffer]);
+        }
+        
+        if ($this->block)
+        {
+            $results = [];
+            while ($r = $outBuffer->get())
+                $results[] = $r;
+            
+            return $results;
+        }
+        
+        return $outBuffer;
+    }
+
     // Begin the task map.
     public function start()
     {
         if ($this->limit > 0)
         {
-            $chan = $this->block ? new Channel : null;
-            return Dispatcher::detach(function() use ($chan)
-            {
-                println('starting pool');
-                $tasks = [];
-                foreach ($this->data as $item)
-                {
-                    $params = is_array($item) ? $item : [$item];
-                    if ($this->params)
-                        $params = array_merge($params, $this->params);
-                    
-                    $tasks[] = Dispatcher::detach($this->callback, $params);  
-                    if ($chan) {
-                        $chan->put(Dispatcher::wait($tasks));
-                    }  
-                    
-                    if (count($tasks) >= $this->limit)   
-                        Dispatcher::wait_any($tasks);        
-                }
-                
-                if ($chan)
-                    return $chan->get();
-            }); 
+            return $this->_runPool();
         }
         else
         {
@@ -113,9 +134,9 @@ class TaskMap
             
                 $tasks[] = Dispatcher::detach($this->callback, $params);               
             }
-            
             if ($this->block)
                 return Dispatcher::wait($tasks);
+            return $tasks;
         }
     }
 }

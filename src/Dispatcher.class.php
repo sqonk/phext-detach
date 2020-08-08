@@ -24,7 +24,8 @@ use sqonk\phext\core\arrays;
 class Dispatcher
 {
     static private $threads = [];
-    
+    static private $shutdownSet = false;
+        
 	/*
 		Execute the provided callback on a seperate process.
 
@@ -39,9 +40,9 @@ class Dispatcher
 
 	    @returns            The newly created and started task.
 	*/
-    static public function detach($callback, array $args = [])
+    static public function detach(callable $callback, array $args = [])
     {
-        self::cleanup(); // remove any completed threads from the register.
+        self::cleanup(); // remove any completed threads from the register. 
         
         $t = new Task($callback);
 		self::$threads[] = $t; // add to the internal register to prevent GC.    
@@ -59,6 +60,12 @@ class Dispatcher
     static public function map(iterable $data, callable $callback)
     {
         return new TaskMap($data, $callback);
+    }
+    
+    // Internal function.
+    static public function _clear()
+    {
+        self::$threads = [];
     }
     
     static private function cleanup()
@@ -86,6 +93,12 @@ class Dispatcher
     {
 		if (! $tasks) 
 			$tasks = self::$threads;
+        
+        if (is_array($tasks) && count($tasks) == 0)
+            return;
+        
+        if (is_array($tasks) && count($tasks) == 1)
+            $tasks = $tasks[0];
 		
         if ($tasks instanceof Task)
 		{
@@ -106,8 +119,9 @@ class Dispatcher
                 }
         }
 		
-		return array_map(function($t) { return $t->result(); }, self::$threads);				
-        
+		return array_map(function($t) { 
+            return $t->result(); 
+        }, $tasks);				
     }
 	
     /* 
@@ -131,9 +145,20 @@ class Dispatcher
             usleep(TASK_WAIT_TIME);
             foreach ($tasks as $t)
                 if ($t->complete()) 
-                    return $t->result();
+                    return $t->result(); 
         }
 	}
+    
+    // Immediately stop all running tasks.
+    static public function kill()
+    {
+        foreach (self::$threads as $t) {
+            if ($t->isAlive())
+                $t->stop(SIGKILL, true);
+        }
+        
+        self::$threads = [];
+    }
 }
 
 

@@ -39,41 +39,62 @@ define('TASK_WAIT_TIME', 500);
 class Task 
 {
     protected $callback; // callback method run from the seperate process.
-    protected $pid; // holds the child process id in the parent.
-	protected $isParent = true; // Used internally to determine which address space we are currently in.
-	protected $commID; // uniqid key for the parent and child to send data to one another.
+    protected $pid; // holds the child process id.
+    protected $isParent = true; // Used internally to determine which address space we are currently in.
 	protected $started = false; // has the task actually begun.
-	protected $resultHasBeenRetrieved = false; // helps prevent auto-cleanup on completed tasks with un-fetched results.
-	
-	static protected $allowParentCleanup = true;
     
+    protected const pCHILD = 'child';
+    protected const pPARENT = 'parent';
+    
+    static protected $currentPID = '_parent_';
+    static protected $rootPID;
+    
+    static private $envPassed = false;
+    
+    static private function _checkRequirements()
+    {
+        if (! function_exists('pcntl_fork'))
+            throw new \RuntimeException("Detach requires the PCNTL extension to be installed and active.");
+        if (! function_exists('apcu_fetch'))
+            throw new \RuntimeException("Detach requires the APCu extension to be installed and active.");
+        if (php_sapi_name() == 'cli' && ini_get('apc.enable_cli') != 1)
+            throw new \RuntimeException("Detach requires the APCu be enabled for CLI usage (add apc.enable_cli to your php.ini).");
+    
+        self::$envPassed = true;
+    }
+    
+    static public function rootPID()
+    {
+        if (! self::$rootPID)
+            self::$rootPID = getmypid();
+        return self::$rootPID;
+    }
+    
+    static public function currentPID()
+    {
+        return self::$currentPID;
+    }
+	    
     public function __construct($callback = null) 
 	{
     	if ($callback !== null)
         	$this->setRunnable($callback);
-		
-		$this->commID = 'TASK_ID_'.uniqid(true);
+        
+        self::rootPID(); // ensure the root PID is set before we spawn.
+        
+        $this->uuid = uniqid(true);
+        
+        $child = $this->key(self::pCHILD);
+        $parent = $this->key(self::pPARENT);
+        foreach ([$parent, $child, "$parent.lock", "$child.lock"] as $key)
+            if (apcu_exists($key)) 
+                apcu_delete($key);
     }
-	
-	public function __destruct()
-	{
-		$this->cleanup();
-	}
-	
-	// clean up any communication channels associated with the process.
-	public function cleanup()
-	{
-		if ($this->isParent and ! self::$allowParentCleanup)
-			return;
-				
-		$suffix = $this->isParent ? 'parent' : 'child';
-		$key = "{$this->commID}_{$suffix}";
-		
-		$path = sprintf("%s/%s", sys_get_temp_dir(), $key);
-		if (file_exists($path))
-			unlink($path);
-		
-	}
+
+    protected function key($suffix)
+    {
+        return "TASKID-{$this->pid}-{$this->uuid}_$suffix";
+    }
 	
 	// Get or set the callback for the child process to run.
 	public function setRunnable(callable $callback = null)
@@ -115,20 +136,21 @@ class Task
 	// Obtains the result from the child process.    
 	public function result()
 	{
-		$this->resultHasBeenRetrieved = true;
 		return $this->readFromChild();
 	}
 	
 	// Do we have result data waiting in the pipe that has not been read in by the parent?
 	public function unread()
 	{
-		$path = sprintf("%s/%s", sys_get_temp_dir(), "{$this->commID}_parent");
-		return ! $this->resultHasBeenRetrieved and file_exists($path) and filesize($path) > 0;
+		return apcu_exists($this->key(self::pPARENT));
 	}
 
     // Starts the child process, all the parameters are passed to the callback function.
     public function start(array $args = []) 
 	{	
+        if (! self::$envPassed)
+            self::_checkRequirements();
+        
 		$this->started = true; // flag the task has having begun.
         $pid = @pcntl_fork();
         if ($pid == -1) 
@@ -138,71 +160,118 @@ class Task
 		{
             // parent process receives the pid.
             $this->pid = $pid;
+            $key = $this->key(self::pPARENT);
         }
         else 
 		{
 			// child process entry point.
-			$this->isParent = false;
-			
-			/*
-				Because the forking process duplicates the current runtime we not
-				only end up with the child process but also ghost copies of the 
-				parent. Therefore we need a global flag that instructs the cleanup
-				manager on the child-side to never wipe the communication channel for 
-				the real parent operating in the originating process.
-			*/
-			self::$allowParentCleanup = false;
+			$this->isParent = false;	
+            $this->pid = getmypid();
+            
+            self::$currentPID = $this->pid;		
 			
             // child
             pcntl_signal(SIGTERM, array($this, 'signalHandler'));
             
-			if ($resp = $this->run(...$args)) 
-				$this->sendToParent($resp);
-			$this->cleanup();
+            register_shutdown_function(function() {
+                $key = $this->key(self::pCHILD);
+                if (apcu_exists($key))
+                    apcu_delete($key); // remove any store data destined for the child.
+            });
+            
+            $r = $this->run(...$args); //println('send to parent');
+			$this->sendToParent($r);
+			
             exit;
         }
+    }
+    
+    protected function _synchronised($suffix, $callback)
+    {
+        $lock = $this->key($suffix).".lock";
+        $pid = self::$currentPID; 
+        while (apcu_fetch($lock) != $pid)
+        {  
+            if (! apcu_add($lock, $pid))
+                usleep(TASK_WAIT_TIME);
+        }
+        
+        $callback();
+        
+        apcu_delete($lock);
     }
 	
 	// Send data to the desired process (parent or child).
 	protected function write($suffix, $data)
 	{
-		$data = serialize($data);
-		$key = "{$this->commID}_{$suffix}";
-		
-		if (file_put_contents(sprintf("%s/%s", sys_get_temp_dir(), $key), $data, LOCK_EX) === false)
-			throw new \RuntimeException("Failed to write to file store for '$key'");
+        $written = false;
+        $key = $this->key($suffix);
+        while (! $written)
+        {
+            $this->_synchronised($suffix, function() use ($suffix, &$written, $data, $key) {
+                if (apcu_add($key, $data, 0))
+                    $written = apcu_exists($key);
+            });
+            if (! $written)
+                usleep(TASK_WAIT_TIME);
+        }
 	}
 	
 	// Called from child.
 	protected function sendToParent($data)
 	{
-		$this->write('parent', $data);
+		$this->write(self::pPARENT, $data);
 	}
 	
 	
 	// Called from parent.
 	protected function sendToChild($data)
 	{
-		$this->write('child', $data);
+		$this->write(self::pCHILD, $data);
 	}
 
 	// Read data from the desired process (parent or child).
-	protected function read(string $suffix)
+	protected function read($suffix)
 	{
-		$path = sprintf("%s/%s", sys_get_temp_dir(), "{$this->commID}_{$suffix}");
-		return file_exists($path) ? unserialize(file_get_contents($path)) : '';
+		$key = $this->key($suffix);
+        $value = '';
+        
+        $read = false;
+        while (! $read)
+        {
+            if (apcu_exists($key))
+            {
+                $ok = true;
+                $this->_synchronised($suffix, function() use (&$value, &$read, $key, &$ok) { 
+                    if (apcu_exists($key)) { 
+                        $value = apcu_fetch($key, $ok); 
+                        if ($ok) { 
+                            apcu_delete($key);
+                            $read = true;
+                        }
+                    }
+                });
+                if (! $ok)
+                    throw new \RuntimeException("Failed to read task store for '$key'");
+            }
+            
+            if (! $read)
+                usleep(TASK_WAIT_TIME); 
+        }
+        
+        return $value;
 	}
 	
 	// called from parent.
 	protected function readFromChild()
 	{
-		return $this->read('parent');
+		return $this->read(self::pPARENT);
 	}
 	
 	// called from child.
 	protected function readFromParent()
 	{
-		return $this->read('child');
+		return $this->read(self::pCHILD);
 	}
 	 
 	// Main entry point of the child process.
@@ -241,7 +310,7 @@ class Task
 		{
             posix_kill($this->pid, $signal);
             if ($wait) {
-                pcntl_waitpid($this->pid, $status = 0);
+                pcntl_waitpid($this->pid, $status);
             }
         }
     }
