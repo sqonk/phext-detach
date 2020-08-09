@@ -400,7 +400,7 @@ Generate 10 tasks, each returning a random number to the parent process.
 foreach (range(1, 10) as $i)
   detach (function() use ($i) {
     usleep(rand(100, 1000));
-  	return [$i, rand(1, 4)];
+    return [$i, rand(1, 4)];
   });
 
 // wait for all tasks to complete and then print each result.	
@@ -418,7 +418,7 @@ use sqonk\phext\detach\Dispatcher as dispatch;
 // generate 10 seperate tasks, all of which return a random number.
 $r = dispatch::map(range(1, 10), function($i) {
 	usleep(rand(100, 1000));
-	return [$i, rand(1, 4)];
+  return [$i, rand(1, 4)];
 })->start();
 
 // wait for all tasks to complete and then print each result.	
@@ -437,7 +437,7 @@ use sqonk\phext\detach\BufferedChannel;
 function addFive($i, $chan) 
 {
   usleep(rand(100, 1000));
-	$chan->put([$i, $i+5]);
+  $chan->put([$i, $i+5]);
 };
 
 // generate 10 seperate tasks, all of which return the number passed in + 5.
@@ -513,7 +513,7 @@ class MyTask extends Task
 $t = new MyTask;
 $t->start();
 while (! $t->complete())
-	usleep(TASK_WAIT_TIME);
+  usleep(TASK_WAIT_TIME);
 println('task complete, result is', $t->result());
 // will print out the data returned from the task, which is '2' in this example.
 ```
