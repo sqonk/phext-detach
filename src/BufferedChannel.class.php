@@ -231,4 +231,71 @@ class BufferedChannel
 	{
 		return $this->get($wait);
 	}
+    
+    /*
+		Obtain all values currently residing on the queue (if any). If $wait is TRUE then
+		this method will block until a new value is received. Be aware that
+		in this mode the method will block forever if no further values
+		are queued from other tasks.
+	
+		If the read capacity of the channel is set and has been exceeded then
+		this method will return NULL immediately.
+    
+        If $wait is given as an integer of 1 or more then it is used as a timeout
+        in seconds. In such a case, if nothing is received before the timeout then 
+        a value of NULL will be returned if nothing is received prior to the expiry.
+	
+		$wait defaults to TRUE.    
+	*/
+    public function get_all($wait = true) 
+    {
+		if ($this->capacity !== null and $this->readCount >= $this->capacity || ! $this->open)
+			return null;
+		
+		$values = null;
+        $started = time();
+        $waitTimeout = 0; 
+        if (is_int($wait)) {
+            $waitTimeout = $wait;
+            $wait = true;
+        }
+        
+        /*
+            - Wait until data is present.
+            - Aquire lock.
+            - Read data, as long as someone else has not snuck in a got it since we got the lock.
+            - Delete value
+            - Release lock
+        */
+        $read = false;
+        while (! $read)
+        {
+            if ($waitTimeout > 0 and time()-$started >= $waitTimeout)
+                break;
+            
+            if (apcu_exists($this->key))
+            {
+                $this->_synchronised(function() use (&$value, &$read) {
+                    if (apcu_exists($this->key)) { 
+                        $values = apcu_fetch($this->key); 
+                        $read = true;
+                        $this->readCount += count($values);
+                        apcu_delete($this->key);
+                    }
+                });
+            }
+            if (! $wait)
+                $read = true;
+            if (! $read)
+                usleep(TASK_WAIT_TIME); 
+        }
+        
+        if (is_array($values) && arrays::last($values) == self::CHAN_SIG_CLOSE)
+        {
+            array_pop($values);
+            $this->open = false;
+        }
+        
+        return $values;
+    }
 }
