@@ -67,4 +67,17 @@ class BufferedChannelTest extends TestCase
         
         detach_kill();
     }
+    
+    public function testBulkSet()
+    {
+        $inputs = [1,2,3];
+        $chan = new BufferedChannel;
+        detach(function($chan, $inputs) {
+            $chan->bulk_set($inputs);
+            $chan->close();
+        }, [$chan, $inputs]);
+        
+        while ($r = $chan->get())
+            $this->assertSame($r, array_shift($inputs));
+    }
 }

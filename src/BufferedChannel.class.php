@@ -119,6 +119,39 @@ class BufferedChannel
 	{
 		return $this->set($value);
 	}
+    
+    /* 
+		Queue a bulk set of values onto the channel, causing all readers to wake up.
+    
+        If you have a large number of items to push onto the queue at once then this
+        method will be faster than calling set() for every element in the array.
+	*/
+    public function bulk_set(array $values)
+    {
+        if (! $this->open)
+            return $this;
+        /*
+            Rules:
+            - Require lock.
+            - Append new data.
+            - Release lock.
+        */
+        $written = false;
+        while (! $written)
+        {
+            $this->_synchronised(function() use ($values, &$written) {
+                $data = apcu_exists($this->key) ? apcu_fetch($this->key) : [];
+                $data = array_merge($data, $values);
+                
+                if (apcu_store($this->key, $data))
+                    $written = true;
+            });
+            if (! $written)
+                usleep(TASK_WAIT_TIME); 
+        }
+                
+        return $this;
+    }
 
     /*
 		Obtain the next value on the queue (if any). If $wait is TRUE then
