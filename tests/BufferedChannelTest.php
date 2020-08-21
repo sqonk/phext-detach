@@ -92,6 +92,7 @@ class BufferedChannelTest extends TestCase
             $chan->close();
         }, [$chan, $inputs]);
         
+        detach_wait();
         $results = $chan->get_all();
         $this->assertSame($inputs, $results);
     }
