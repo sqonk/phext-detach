@@ -87,9 +87,10 @@ class TaskMap
         $outBuffer = new BufferedChannel;
         $outBuffer->capacity(count($this->data));
         
+        $tasks = [];
         foreach (range(1, $this->limit) as $i)
         {
-            Dispatcher::detach(function($feed, $out) {
+            $tasks[] = Dispatcher::detach(function($feed, $out) {
                 
                 while ($item = $feed->next())
                 {
@@ -106,11 +107,8 @@ class TaskMap
         
         if ($this->block)
         {
-            $results = [];
-            while ($r = $outBuffer->get())
-                $results[] = $r;
-            
-            return $results;
+            detach_wait($tasks);
+            return $outBuffer->get_all(false);
         }
         
         return $outBuffer;
