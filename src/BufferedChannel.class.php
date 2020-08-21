@@ -26,7 +26,7 @@ The queue is unordered, meaning that values may be read in in a different order 
 
 BufferedChannels are an effective bottle-necking system where data obtained from multiple tasks may need to be fed into a singular thread for post-processing.
 */
-use sqonk\phext\core\strings;
+use sqonk\phext\core\arrays;
 
 class BufferedChannel
 {
@@ -275,12 +275,12 @@ class BufferedChannel
             
             if (apcu_exists($this->key))
             {
-                $this->_synchronised(function() use (&$value, &$read) {
+                $this->_synchronised(function() use (&$values, &$read) {
                     if (apcu_exists($this->key)) { 
                         $values = apcu_fetch($this->key); 
-                        $read = true;
+                        $read = true; 
                         $this->readCount += count($values);
-                        apcu_delete($this->key);
+                        apcu_delete($this->key); 
                     }
                 });
             }
