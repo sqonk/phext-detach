@@ -80,4 +80,19 @@ class BufferedChannelTest extends TestCase
         while ($r = $chan->get())
             $this->assertSame($r, array_shift($inputs));
     }
+    
+    public function testGetAll()
+    {
+        $inputs = range(1,9);
+        $chan = new BufferedChannel;
+        
+        detach(function($chan, $inputs) {
+            foreach ($inputs as $v)
+                $chan->put($v);
+            $chan->close();
+        }, [$chan, $inputs]);
+        
+        $results = $chan->get_all();
+        $this->assertSame($inputs, $results);
+    }
 }
