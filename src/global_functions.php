@@ -46,9 +46,9 @@ function detach(callable $callback, array $args = [])
 	Returns the result of the task or an array of results depending
 	on how many tasks are being waited on.
 */
-function detach_wait(sqonk\phext\detach\Task $task = null)
+function detach_wait($tasks = null)
 {
-    return \sqonk\phext\detach\Dispatcher::wait($task);
+    return \sqonk\phext\detach\Dispatcher::wait($tasks);
 }
 
 /*
