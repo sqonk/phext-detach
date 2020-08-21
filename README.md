@@ -292,6 +292,34 @@ If `$wait` is given as an integer of 1 or more then it is used as a timeout  in 
 
 
 
+##### bulk_set
+
+```php
+public function bulk_set(array $values)
+```
+
+Queue a bulk set of values onto the channel, causing all readers to wake up.
+
+If you have a large number of items to push onto the queue at once then this method will be faster than calling set() for every element in the array.
+
+
+
+##### get_all
+
+```php
+public function get_all($wait = true)
+```
+
+Obtain all values currently residing on the queue (if any). If `$wait` is `TRUE` then this method will block until a new value is received. Be aware that in this mode the method will block forever if no further values are queued from other tasks.
+
+If the read capacity of the channel is set and has been exceeded then this method will return NULL immediately.
+
+If `$wait` is given as an integer of 1 or more then it is used as a timeout in seconds. In such a case, if nothing is received before the timeout then a value of `NULL` will be returned if nothing is received prior to the expiry.
+
+`$wait` defaults to `TRUE`.  
+
+
+
 ##### close
 
 ```php
