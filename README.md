@@ -71,7 +71,7 @@ A global namespace interface to [Dispatcher::detach](#dispatcher::detach)
 ##### detach_wait
 
 ```php
-function detach_wait(sqonk\phext\detach\Task $task = null)
+function detach_wait($tasks = null)
 ```
 
 A global namespace interface to [Dispatcher::wait](#dispatcher::wait)
