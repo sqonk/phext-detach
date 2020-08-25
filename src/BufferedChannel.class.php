@@ -33,9 +33,7 @@ class BufferedChannel
     protected $open = true;
     
     private const CHAN_SIG_CLOSE = "#__CHAN-CLOSE__#";
-    
-    static private $storeLoc;
-				
+    				
 	public function __construct()
 	{
 		$this->key = 'BCHAN-'.uniqid();
