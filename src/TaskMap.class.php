@@ -89,7 +89,7 @@ class TaskMap
         
         $tasks = [];
         foreach (range(1, $this->limit) as $i)
-        {
+        { 
             $tasks[] = Dispatcher::detach(function($feed, $out) {
                 
                 while ($item = $feed->next())

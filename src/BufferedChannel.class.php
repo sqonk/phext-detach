@@ -30,8 +30,6 @@ use sqonk\phext\core\arrays;
 
 class BufferedChannel
 {
-	protected $capacity;
-	protected $readCount = 0;
     protected $open = true;
     
     private const CHAN_SIG_CLOSE = "#__CHAN-CLOSE__#";
@@ -41,6 +39,8 @@ class BufferedChannel
 	public function __construct()
 	{
 		$this->key = 'BCHAN-'.uniqid();
+        $this->wckey = "$this->key.wc";
+        $this->capkey = "$this->key.cap";
 	}
     
     protected function _synchronised($callback)
@@ -60,26 +60,56 @@ class BufferedChannel
 	
 	/*
 		Set an arbitrary limit on the number of times data will be ready 
-		from the channel. Once the limit has been reached all subsequent 
-		reads will return FALSE.
+		from the channel. Once the limit has been reached the channel 
+        will be closed.
 	
-		Every time this method is called it will reset the read count to 0.
+		Every time this method is called it will reset the write count to 0.
 	*/
 	public function capacity(int $totalDeposits)
 	{
-		$this->capacity = $totalDeposits;
-		$this->readCount = 0;
+		apcu_store($this->wckey, 0);
+        apcu_store($this->capkey, $totalDeposits);
         return $this;
 	}
+    
+    protected function _writeCount()
+    {
+        $count = 0;
+        if (apcu_exists($this->wckey)) {
+            $v = apcu_fetch($this->wckey, $pass);
+            if ($pass)
+                $count = $v;
+        }
+        return $count;
+    }
+    
+    protected function _increment($amount = 1)
+    { 
+        if (apcu_exists($this->capkey)) {
+            $current = $this->_writeCount();
+            if (! apcu_store($this->wckey, $current+$amount))
+                println('failed to write inc');
+        }
+    }
+    
+    protected function _hitCapcity()
+    {
+        if (apcu_exists($this->capkey)) {
+            $v = apcu_fetch($this->capkey, $ok);
+            if ($ok) {
+                $hit = $this->_writeCount() >= $v;
+                return $hit;
+            }
+        }
+        return false;
+    }
     
     // Close off the channel, signalling to the receiver that no further values will be sent.
     public function close()
     {
         if (! $this->open)
             return $this;
-        
         $this->set(self::CHAN_SIG_CLOSE);
-        $this->open = false;
         
         return $this;
     }
@@ -89,8 +119,6 @@ class BufferedChannel
 	*/
     public function set($value) 
     { 
-        if (! $this->open)
-            return $this;
         /*
             Rules:
             - Require lock.
@@ -104,12 +132,18 @@ class BufferedChannel
                 $data = apcu_exists($this->key) ? apcu_fetch($this->key) : [];
                 $data[] = $value;
                 
-                if (apcu_store($this->key, $data))
+                if (apcu_store($this->key, $data)) { 
+                    $this->_increment();
                     $written = true;
+                }
+                    
             });
             if (! $written)
                 usleep(TASK_WAIT_TIME); 
         }
+        
+        if ($written && $value !== self::CHAN_SIG_CLOSE && $this->_hitCapcity())
+            $this->close();
                 
         return $this;
     }
@@ -128,8 +162,6 @@ class BufferedChannel
 	*/
     public function bulk_set(array $values)
     {
-        if (! $this->open)
-            return $this;
         /*
             Rules:
             - Require lock.
@@ -143,12 +175,18 @@ class BufferedChannel
                 $data = apcu_exists($this->key) ? apcu_fetch($this->key) : [];
                 $data = array_merge($data, $values);
                 
-                if (apcu_store($this->key, $data))
+                if (apcu_store($this->key, $data)) {
                     $written = true;
+                    $this->_increment(count($values));
+                }
+                    
             });
             if (! $written)
                 usleep(TASK_WAIT_TIME); 
         }
+        
+        if ($written && $this->_hitCapcity())
+            $this->close();
                 
         return $this;
     }
@@ -158,9 +196,6 @@ class BufferedChannel
 		this method will block until a new value is received. Be aware that
 		in this mode the method will block forever if no further values
 		are queued from other tasks.
-	
-		If the read capacity of the channel is set and has been exceeded then
-		this method will return FALSE immediately.
     
         If $wait is given as an integer of 1 or more then it is used as a timeout
         in seconds. In such a case, if nothing is received before the timeout then 
@@ -171,8 +206,8 @@ class BufferedChannel
 	*/
     public function get($wait = true) 
     {
-		if ($this->capacity !== null and $this->readCount >= $this->capacity || ! $this->open)
-			return null;
+		if (! $this->open) 
+		    return null;
 		
 		$value = null;
         $started = time();
@@ -198,7 +233,7 @@ class BufferedChannel
             if (apcu_exists($this->key))
             {
                 $this->_synchronised(function() use (&$value, &$read) {
-                    if (apcu_exists($this->key)) { 
+                    if (apcu_exists($this->key)) {
                         $values = apcu_fetch($this->key); 
                         if (count($values) > 0) {
                             $value = array_shift($values); 
@@ -206,7 +241,6 @@ class BufferedChannel
                                 apcu_store($this->key, $values); // re-insert the shortened array.
                             }
                             $read = true;
-                            $this->readCount++;
                         }
                     }
                 });
@@ -237,9 +271,6 @@ class BufferedChannel
 		this method will block until a new value is received. Be aware that
 		in this mode the method will block forever if no further values
 		are queued from other tasks.
-	
-		If the read capacity of the channel is set and has been exceeded then
-		this method will return NULL immediately.
     
         If $wait is given as an integer of 1 or more then it is used as a timeout
         in seconds. In such a case, if nothing is received before the timeout then 
@@ -249,7 +280,7 @@ class BufferedChannel
 	*/
     public function get_all($wait = true) 
     {
-		if ($this->capacity !== null and $this->readCount >= $this->capacity || ! $this->open)
+		if (! $this->open)
 			return null;
 		
 		$values = null;
@@ -279,7 +310,6 @@ class BufferedChannel
                     if (apcu_exists($this->key)) { 
                         $values = apcu_fetch($this->key); 
                         $read = true; 
-                        $this->readCount += count($values);
                         apcu_delete($this->key); 
                     }
                 });

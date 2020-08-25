@@ -46,7 +46,7 @@ dispatch::map($input, 'gen')->block(false)->limit(3)->params($chan)->start();
 
 // wait for all tasks to complete and then print each result.	
 $tally = 0;
-while ($r = $chan->get(2)) {
+while ($r = $chan->get()) {
     $tally++;
     println("##RESULT: $r", 'tally', $tally);
 }

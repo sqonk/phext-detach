@@ -254,9 +254,9 @@ $chan = new BufferedChannel;
 public function capacity(int $totalDeposits) : BufferedChannel
 ```
 
-Set an arbitrary limit on the number of times data will be read from the channel. Once the limit has been reached all subsequent reads will return `NULL`.
+Set an arbitrary limit on the number of times data will be written to the channel. Once the limit has been reached the channel will be closed.
 
-Every time this method is called it will reset the internal *read* count to 0.
+Every time this method is called it will reset the internal write count to 0.
 
 
 
@@ -270,7 +270,9 @@ public function set($value) : BufferedChannel
 public function put($value) : BufferedChannel // alias
 ```
 
-Queue a new value onto the channel, causing all waiting readers to wake up.
+Queue a new value onto the channel, causing all waiting readers to wake up. 
+
+If a capacity limit is set, adding the new value was successful and the capacity was hit then the channel will be closed.
 
 
 
@@ -285,6 +287,8 @@ public function next($wait = true) : mixed // next
 ```
 
 Obtain the next value on the channel (if any). If `$wait` is `TRUE` then this method will block until a new value is received. Be aware that in this mode the method will block forever if no further values are sent from other tasks.
+
+If the value retrieved is a 'channel closed' signal then `NULL` will be returned. All subsequent calls will also return `NULL`.
 
 If `$wait` is given as an integer of 1 or more then it is used as a timeout  in seconds. In such a case, if nothing is received before the timeout then a value of `NULL` will be returned.
 
@@ -302,6 +306,8 @@ Queue a bulk set of values onto the channel, causing all readers to wake up.
 
 If you have a large number of items to push onto the queue at once then this method will be faster than calling set() for every element in the array.
 
+If a capacity limit is set, adding the new values was successful and the capacity was hit then the channel will be closed.
+
 
 
 ##### get_all
@@ -312,7 +318,7 @@ public function get_all($wait = true)
 
 Obtain all values currently residing on the queue (if any). If `$wait` is `TRUE` then this method will block until a new value is received. Be aware that in this mode the method will block forever if no further values are queued from other tasks.
 
-If the read capacity of the channel is set and has been exceeded then this method will return NULL immediately.
+If the value retrieved is a 'channel closed' signal then `NULL` will be returned. All subsequent calls will also return `NULL`.
 
 If `$wait` is given as an integer of 1 or more then it is used as a timeout in seconds. In such a case, if nothing is received before the timeout then a value of `NULL` will be returned if nothing is received prior to the expiry.
 
