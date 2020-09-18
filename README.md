@@ -433,13 +433,13 @@ Generate 10 tasks, each returning a random number to the parent process.
 // generate 10 seperate tasks, all of which return a random number.
 foreach (range(1, 10) as $i)
   detach (function() use ($i) {
-    usleep(rand(100, 1000));
-    return [$i, rand(1, 4)];
-  });
+     usleep(rand(100, 1000));
+     return [$i, rand(1, 4)];
+});
 
 // wait for all tasks to complete and then print each result.	
 foreach (detach_wait() as [$i, $rand])
-	println("$i random number was $rand");	
+  println("$i random number was $rand");	
 ```
 
 
@@ -451,13 +451,13 @@ use sqonk\phext\detach\Dispatcher as dispatch;
 
 // generate 10 seperate tasks, all of which return a random number.
 $r = dispatch::map(range(1, 10), function($i) {
-	usleep(rand(100, 1000));
+  usleep(rand(100, 1000));
   return [$i, rand(1, 4)];
 })->start();
 
 // wait for all tasks to complete and then print each result.	
 foreach ($r as [$i, $rand])
-	println("$i random number was $rand");	
+  println("$i random number was $rand");	
 ```
 
 
@@ -482,7 +482,7 @@ dispatch::map(range(1, 10), 'addFive')->limit(3)->block(false)->params($chan)->s
 
 // wait for all tasks to complete and then print each result.	
 while ($r = $chan->get(2))
-	println($r[0], 'number is:', $r[1]);
+  println($r[0], 'number is:', $r[1]);
 ```
 
 
