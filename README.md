@@ -213,7 +213,7 @@ public function get($wait = true) : Channel
 ```
 
 ```php
-public function next($wait = true) : Channel // next
+public function next($wait = true) : Channel // alias
 ```
 
 Obtain the next value on the channel (if any). If `$wait` is `TRUE` then this method will block until a new value is received. Be aware that in this mode the method will block forever if no further values are sent from other tasks.
@@ -283,7 +283,7 @@ public function get($wait = true) : mixed
 ```
 
 ```php
-public function next($wait = true) : mixed // next
+public function next($wait = true) : mixed // alias
 ```
 
 Obtain the next value on the channel (if any). If `$wait` is `TRUE` then this method will block until a new value is received. Be aware that in this mode the method will block forever if no further values are sent from other tasks.
