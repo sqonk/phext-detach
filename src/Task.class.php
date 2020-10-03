@@ -19,23 +19,17 @@ namespace sqonk\phext\detach;
 * permissions and limitations under the License.
 */
 
-/*
-    This class is a modernised and rewritten version of the Thread class originally written
-    by Tudor Barbu <miau@motane.lu>. It forks a seperate process (based on the parent) and 
-	executes the requested callback.
-
-	This class originally used sockets to communicate data back and fourth, which 
-	evenutally proved too unreliable with various race conditions eventuating around
-	process termination.
-
-	It now makes use of file-based storage for transfering data.
-
-	You will not need to access this class directly unless you wish to extend the class and 
-	manage the execution yourself. Instance creation is exposed through the Dispatcher and the 
-	public methods detach() and detach_wait().
-*/
 define('TASK_WAIT_TIME', 500);
 
+/**
+ * This class is a modernised and rewritten version of the Thread class originally written
+ * by Tudor Barbu <miau@motane.lu>. It forks a seperate process (based on the parent) and
+ * executes the requested callback.
+ * 
+ * You will not need to access this class directly unless you wish to extend the class and
+ * manage the execution yourself. Instance creation is exposed through the Dispatcher and the
+ * public methods `detach()` and `detach_wait()`.
+ */
 class Task 
 {
     protected $callback; // callback method run from the seperate process.
@@ -74,7 +68,13 @@ class Task
     {
         return self::$currentPID;
     }
-	    
+	
+    /**
+     * Create a new Task. 
+     * 
+     * This merely creates the object. To schedule it for execution
+     * you must call `start()` on it.
+     */    
     public function __construct($callback = null) 
 	{
     	if ($callback !== null)
@@ -96,7 +96,9 @@ class Task
         return "TASKID-{$this->pid}-{$this->uuid}_$suffix";
     }
 	
-	// Get or set the callback for the child process to run.
+	/**
+	 * Get or set the callback for the child process to run.
+	 */
 	public function setRunnable(callable $callback = null)
 	{
 		if ($callback) {
@@ -108,44 +110,61 @@ class Task
 		}
 	}
 	
-	// Get the current callback method. This may either be a callable or a string
-	// depending upon what you have previously set.
+	/**
+	 * Get the current callback method. This may either be a callable 
+	 * or a string depending upon what you have previously set.
+	 */
 	public function runnable()
 	{
 		return $this->callback;
 	}
     
-    // Returns the process id (pid) of the child process.
+    /**
+     * Returns the process id (pid) of the child process.
+     */
     public function pid() 
 	{
         return $this->pid;
     }
     
-    // Checks if the child process is alive.
+    /**
+     * Checks if the child process is alive.
+     */
     public function isAlive() 
 	{
         return pcntl_waitpid($this->pid, $status, WNOHANG) === 0;
     }
 	
-	// A task has completed when it was started but is no longer alive.
+	/**
+	 * A task has completed when it was started but is no longer alive.
+	 */
 	public function complete()
 	{
 		return $this->started and ! $this->isAlive();
 	}
 	
-	// Obtains the result from the child process.    
+	/**
+	 * Obtains the result from the child process.  
+	 */  
 	public function result()
 	{
 		return $this->readFromChild();
 	}
 	
-	// Do we have result data waiting in the pipe that has not been read in by the parent?
+	/**
+	 * Do we have result data waiting in the pipe that has not been read in by the parent?
+	 */
 	public function unread()
 	{
 		return apcu_exists($this->key(self::pPARENT));
 	}
 
-    // Starts the child process, all the parameters are passed to the callback function.
+    /**
+     * Start the task on a spwaned child process, being a clone of the parent.
+     * 
+     * -- parameters:
+     * @param $args The parameters to pass to the task's callback when it is executed on the child process.
+     */
     public function start(array $args = []) 
 	{	
         if (! self::$envPassed)
@@ -298,12 +317,13 @@ class Task
 		return $resp;
 	}
     
-    /*
-      Attempts to stop the child process. Returns true on success and false otherwise.
-     
-      @param integer $signal - SIGKILL/SIGTERM
-      @param boolean $wait - whether or not to block while the process exits.
-    */
+    /**
+     * Attempts to stop the child process. Returns true on success and false otherwise.
+     * 
+     * -- parameters:
+     * @param $signal - SIGKILL/SIGTERM
+     * @param $wait - whether or not to block while the process exits.
+     */
     public function stop($signal = SIGKILL, $wait = false) 
 	{
         if ($this->isAlive()) 
@@ -315,7 +335,6 @@ class Task
         }
     }
     
-    // signal handler
     protected function signalHandler($signal) 
 	{
         // currently does nothing.

@@ -19,13 +19,16 @@ namespace sqonk\phext\detach;
 * permissions and limitations under the License.
 */
 
-/*
-A BufferedChannel is an queue of values that may be passed between tasks. Unlike a standard channel, it may continue to accept new values before any existing ones have been read in via another task.
-
-The queue is unordered, meaning that values may be read in in a different order from that of which they were put in.
-
-BufferedChannels are an effective bottle-necking system where data obtained from multiple tasks may need to be fed into a singular thread for post-processing.
-*/
+/**
+ * A BufferedChannel is an queue of values that may be passed between tasks. Unlike a standard channel, 
+ * it may continue to accept new values before any existing ones have been read in via another task.
+ * 
+ * The queue is unordered, meaning that values may be read in in a different order from that of which 
+ * they were put in.
+ * 
+ * BufferedChannels are an effective bottle-necking system where data obtained from multiple tasks may 
+ * need to be fed into a singular thread for post-processing.
+ */
 use sqonk\phext\core\arrays;
 
 class BufferedChannel
@@ -34,6 +37,9 @@ class BufferedChannel
     
     private const CHAN_SIG_CLOSE = "#__CHAN-CLOSE__#";
     				
+    /**
+     * Construct a new BufferedChannel.
+     */                
 	public function __construct()
 	{
 		$this->key = 'BCHAN-'.uniqid();
@@ -56,13 +62,13 @@ class BufferedChannel
         apcu_delete($lock);
     }
 	
-	/*
-		Set an arbitrary limit on the number of times data will be ready 
-		from the channel. Once the limit has been reached the channel 
-        will be closed.
-	
-		Every time this method is called it will reset the write count to 0.
-	*/
+    /**
+     * Set an arbitrary limit on the number of times data will be ready
+     * from the channel. Once the limit has been reached the channel
+     * will be closed.
+     * 
+     * Every time this method is called it will reset the write count to 0.
+     */
 	public function capacity(int $totalDeposits)
 	{
 		apcu_store($this->wckey, 0);
@@ -102,7 +108,9 @@ class BufferedChannel
         return false;
     }
     
-    // Close off the channel, signalling to the receiver that no further values will be sent.
+    /**
+     * Close off the channel, signalling to the receiver that no further values will be sent.
+     */
     public function close()
     {
         if (! $this->open)
@@ -112,9 +120,9 @@ class BufferedChannel
         return $this;
     }
 	
-    /* 
-		Queue a value onto the channel, causing all readers to wake up.
-	*/
+    /**
+     * Queue a value onto the channel, causing all readers to wake up.
+     */
     public function set($value) 
     { 
         /*
@@ -146,18 +154,20 @@ class BufferedChannel
         return $this;
     }
 	
-	// Alias for Channel::set().
+	/**
+	 * Alias for Channel::set().
+	 */
 	public function put($value)
 	{
 		return $this->set($value);
 	}
     
-    /* 
-		Queue a bulk set of values onto the channel, causing all readers to wake up.
-    
-        If you have a large number of items to push onto the queue at once then this
-        method will be faster than calling set() for every element in the array.
-	*/
+    /**
+     * Queue a bulk set of values onto the channel, causing all readers to wake up.
+     * 
+     * If you have a large number of items to push onto the queue at once then this
+     * method will be faster than calling set() for every element in the array.
+     */
     public function bulk_set(array $values)
     {
         /*
@@ -189,19 +199,19 @@ class BufferedChannel
         return $this;
     }
 
-    /*
-		Obtain the next value on the queue (if any). If $wait is TRUE then
-		this method will block until a new value is received. Be aware that
-		in this mode the method will block forever if no further values
-		are queued from other tasks.
-    
-        If $wait is given as an integer of 1 or more then it is used as a timeout
-        in seconds. In such a case, if nothing is received before the timeout then 
-        a value of NULL will be returned if nothing is received 
-        prior to the expiry.
-	
-		$wait defaults to TRUE.    
-	*/
+    /**
+     * Obtain the next value on the queue (if any). If $wait is TRUE then
+     * this method will block until a new value is received. Be aware that
+     * in this mode the method will block forever if no further values
+     * are queued from other tasks.
+     * 
+     * If $wait is given as an integer of 1 or more then it is used as a timeout
+     * in seconds. In such a case, if nothing is received before the timeout then
+     * a value of NULL will be returned if nothing is received
+     * prior to the expiry.
+     * 
+     * $wait defaults to TRUE.
+     */
     public function get($wait = true) 
     {
 		if (! $this->open) 
@@ -258,24 +268,26 @@ class BufferedChannel
         return $value;
     }
 	
-	// Alias for Channel::get().
+	/**
+	 * Alias for Channel::get().
+	 */
 	public function next($wait = true)
 	{
 		return $this->get($wait);
 	}
     
-    /*
-		Obtain all values currently residing on the queue (if any). If $wait is TRUE then
-		this method will block until a new value is received. Be aware that
-		in this mode the method will block forever if no further values
-		are queued from other tasks.
-    
-        If $wait is given as an integer of 1 or more then it is used as a timeout
-        in seconds. In such a case, if nothing is received before the timeout then 
-        a value of NULL will be returned if nothing is received prior to the expiry.
-	
-		$wait defaults to TRUE.    
-	*/
+    /**
+     * Obtain all values currently residing on the queue (if any). If $wait is TRUE then
+     * this method will block until a new value is received. Be aware that
+     * in this mode the method will block forever if no further values
+     * are queued from other tasks.
+     * 
+     * If $wait is given as an integer of 1 or more then it is used as a timeout
+     * in seconds. In such a case, if nothing is received before the timeout then
+     * a value of NULL will be returned if nothing is received prior to the expiry.
+     * 
+     * $wait defaults to TRUE.
+     */
     public function get_all($wait = true) 
     {
 		if (! $this->open)

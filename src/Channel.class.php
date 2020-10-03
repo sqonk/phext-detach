@@ -19,17 +19,23 @@ namespace sqonk\phext\detach;
 * permissions and limitations under the License.
 */
 
-/*
-Channel is a loose implentation of channels from the Go language. It provides a simple way of allowing independant processes to send and receive data between one another. 
-
-A channel is a block-in, and (by default) a block-out mechanism, meaning that the task that sets a value will block until another task has received it.
-*/
-
+/**
+ * Channel is a loose implentation of channels from the Go language. 
+ * It provides a simple way of allowing independant processes to send 
+ * and receive data between one another.
+ * 
+ * A channel is a block-in, and (by default) a block-out mechanism, meaning 
+ * that the task that sets a value will block until another task has received 
+ * it.
+ */
 class Channel
 {    
     private const CHAN_SIG_CLOSE = "#__CHAN-CLOSE__#";
     private $open = true;
     
+    /**
+     * Construct a new Channel.
+     */
 	public function __construct()
 	{
         $this->key = "CHANID-".uniqid();
@@ -51,7 +57,9 @@ class Channel
         apcu_delete($lock);
     }
     
-    // Close off the channel, signalling to the receiver that no further values will be sent.
+    /**
+     * Close off the channel, signalling to the receiver that no further values will be sent.
+     */
     public function close()
     {
         if (! $this->open)
@@ -63,10 +71,10 @@ class Channel
         return $this;
     }
 		
-    /* 
-		Pass a value into the channel. This method will block until the 
-        channel is free to receive new data again.
-	*/
+    /**
+     * Pass a value into the channel. This method will block until the
+     * channel is free to receive new data again.
+     */
     public function set($value) 
     {
         if (! $this->open)
@@ -92,25 +100,27 @@ class Channel
         return $this;
     }
 	
-	// Alias for Channel::set().
+	/**
+	 * Alias for Channel::set().
+	 */
 	public function put($value)
 	{
 		$this->set($value);
 		return $this;
 	}
 
-    /*
-		Obtain the next value on the channel (if any). If $wait is TRUE then
-		this method will block until a new value is received. Be aware that
-		in this mode the method will block forever if no further values
-		are sent from other tasks.
-    
-        If $wait is given as an integer of 1 or more then it is used as a timeout
-        in seconds. In such a case, if nothing is received before the timeout then 
-        a value of NULL will be returned.
-	
-		$wait defaults to TRUE.    
-	*/
+    /**
+     * Obtain the next value on the channel (if any). If $wait is TRUE then
+     * this method will block until a new value is received. Be aware that
+     * in this mode the method will block forever if no further values
+     * are sent from other tasks.
+     * 
+     * If $wait is given as an integer of 1 or more then it is used as a timeout
+     * in seconds. In such a case, if nothing is received before the timeout then
+     * a value of NULL will be returned.
+     * 
+     * $wait defaults to TRUE.
+     */
     public function get($wait = true) 
     {
         if (! $this->open)
@@ -162,7 +172,9 @@ class Channel
         return $value;
     }
 	
-	// Alias for Channel::get().
+	/**
+	 * Alias for Channel::get().
+	 */
 	public function next($wait = true)
 	{
 		return $this->get($wait);

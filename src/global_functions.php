@@ -17,50 +17,53 @@
 * permissions and limitations under the License.
 */
 
-/*
-	Execute the provided callback on a seperate process.
-
-    Each call creates a Task, which is a spawned
-    subprocess that operates independently of the original process.
-
-    It is useful for environnments that need to run a block of code
-    in parallel.
-
-    @param $callback    The method to be called from the detached task.
-    @param $data        Any parameters to be passed to the callback method.
-
-    @returns            The newly created and started task.
-*/
+/**
+ * Execute the provided callback on a seperate process.
+ * 
+ * Each call creates a Task, which is a spawned
+ * subprocess that operates independently of the original process.
+ * 
+ * It is useful for environnments that need to run a block of code
+ * in parallel.
+ * 
+ * -- parameters:
+ * @param $callback The method to be called from the detached task.
+ * @param $data Any parameters to be passed to the callback method.
+ * 
+ * @return The newly created and started task.
+ */
 function detach(callable $callback, array $args = []) 
 {
     return \sqonk\phext\detach\Dispatcher::detach($callback, $args);
 }
 
-/* 
-	Wait for one or more currently running tasks to complete.
-	
-	This method will accept a single task or an array of tasks. If 
-	nothing is passed in then it will wait for all currently 
-	running tasks to finish.
-
-	Returns the result of the task or an array of results depending
-	on how many tasks are being waited on.
-*/
+/**
+ * Wait for one or more currently running tasks to complete.
+ * 
+ * This method will accept a single task or an array of tasks. If
+ * nothing is passed in then it will wait for all currently
+ * running tasks to finish.
+ * 
+ * Returns the result of the task or an array of results depending
+ * on how many tasks are being waited on.
+ */
 function detach_wait($tasks = null)
 {
     return \sqonk\phext\detach\Dispatcher::wait($tasks);
 }
 
-/*
-    Returns the PID of the current process the caller is on. This is
-    set to NULL for the parent process.
-*/
+/**
+ * Returns the PID of the current process the caller is on. This is
+ * set to NULL for the parent process.
+ */
 function detach_pid()
 {
     return \sqonk\phext\detach\Task::currentPID();
 }
 
-// Immediately stop all running tasks.
+/**
+ * Immediately stop all running tasks.
+ */
 function detach_kill()
 {
     \sqonk\phext\detach\Dispatcher::kill();

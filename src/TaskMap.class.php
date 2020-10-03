@@ -21,55 +21,61 @@ namespace sqonk\phext\detach;
 
 use sqonk\phext\core\arrays;
 
-/*
-    The TaskMap class maps an array of elements each unto their own
-    seperate task.
-*/
-
+/**
+ * The TaskMap class maps an array of elements each unto their own
+ * seperate task.
+ */
 class TaskMap
 {
     protected $limit = 0;
     protected $params;
     protected $block = true;
-    //protected $tasks;
     
     protected $data;
     protected $callback;
     
+    /**
+     * Construct a new map with the provided array of items for distribution 
+     * to a seperate task(s).
+     *
+     * -- parameters:
+     * @param $data The array of items to distribution across the seperate running tasks.
+     * @param $callback The callback method that will receive each item in $data when executed.
+     */
     public function __construct(array $data, callable $callback)
     {
         $this->data = $data;
         $this->callback = $callback;
     }
     
-    /*
-        Set whether the main program will block execution until all tasks have completed.
-    
-        The default is TRUE.
-    */
+    /**
+     * Set whether the main program will block execution until all tasks have completed.
+     * 
+     * The default is TRUE.
+     */
     public function block(bool $waitForCompletion)
     {
         $this->block = $waitForCompletion;
         return $this;
     }
     
-    /*
-        A provide a series of auxiliary parameters that are provided to the callback
-        in addition to the main element passed in.
-    */
+    /**
+     * A provide a series of auxiliary parameters that are provided to the callback
+     * in addition to the main element passed in.
+     */
     public function params(...$args)
     {
         $this->params = $args;
         return $this;
     }
     
-    /*
-        Set the maximum number of tasks that may run concurrently. If the number is below
-        1 then no limit is applied and as many tasks as there are elements in the data array
-        will be created spawned.
-    
-        The default is 0.
-    */
+    /**
+     * Set the maximum number of tasks that may run concurrently. If the number is below
+     * 1 then no limit is applied and as many tasks as there are elements in the data array
+     * will be created spawned.
+     * 
+     * The default is 0.
+     */
     public function limit(int $limit)
     {
         $this->limit = $limit;
@@ -114,7 +120,17 @@ class TaskMap
         return $outBuffer;
     }
 
-    // Begin the task map.
+    /**
+     * Begin the task map.
+     * 
+     * Depending on how you have configured the map it will return the following:
+     *
+     * [md-block]
+     * - When no pool limit and in blocking mode:* An array of all data returned from each task.
+     * - When no pool limit and in non-blocking mode:* An array of spawned tasks.
+     * - When a pool limit is set and in blocking mode:* An array of all data returned from each task.
+     * - When a pool limit is set and in non-blocking mode:* A BufferedChannel that will receive the data returned from each task. The channel will automatically close when all items given to the map have been processed.
+     */
     public function start()
     {
         if ($this->limit > 0)
