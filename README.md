@@ -198,6 +198,12 @@ Please see original concept of pnctl Threading by Tudor Barbu @ <a href="https:/
 
 
 
+## Performance
+
+If you are interested in how the library holds up compared to plain old single-threaded PHP (as well as comparisons with other languages) I have posted a [rudimentary CPU-work-based benchmark project](https://github.com/sqonk/exp-benchmark-tests) with some results.
+
+
+
 ## License
 
 The MIT License (MIT). Please see [License File](license.txt) for more information.
@@ -206,7 +212,7 @@ The MIT License (MIT). Please see [License File](license.txt) for more informati
 
 ## Alternatives
 
-The solution provided in this library is nothing new. It is a modernised, rewritten and extended version of the "Thread" class originally written by Tudor Barbu. 
+The basis for this library is a modernised, rewritten and extended version of the "Thread" class originally written by Tudor Barbu. 
 
 Detach is *not* an asynchronous or event-driven IO framework. [ReactPHP](https://reactphp.org) and [Amp](https://amphp.org) both provide comprehensive solutions in this space.
 
