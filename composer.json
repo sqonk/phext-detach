@@ -5,6 +5,8 @@
     "require": {
 		"php": "^7.3",
 		"ext-pcntl": "*",
+        "ext-posix": "*",
+        "ext-apcu": "*",
         "sqonk/phext-core": "^0.3.2"
     },
 	"keywords": ["pcntl","parallel","multitasking","multi-tasking","threading"],
