@@ -27,6 +27,12 @@ $ composer require sqonk/phext-detach
 
 
 
+## Updating from V0.4
+
+Release 0.5+ adjusts the way Dispatcher::map() works so that it automatically builds and starts the TaskMap, return the result of ->start() on the map object. It's parameters have also been expanded to accept the various TaskMap configuration options directly, in preparation for named parameters in PHP8.
+
+
+
 ## Updating from V0.3
 
 Release 0.4+ is a significant update from previous versions. *It will break existing code that was built to use V0.3.*
