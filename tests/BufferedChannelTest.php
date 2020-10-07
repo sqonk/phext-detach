@@ -19,7 +19,7 @@ declare(strict_types=1);
 */
 
 use PHPUnit\Framework\TestCase;
-use sqonk\phext\detach\{BufferedChannel,Dispatcher};
+use sqonk\phext\detach\{BufferedChannel,Dispatcher,TaskMap};
 
 class BufferedChannelTest extends TestCase
 {
@@ -37,7 +37,8 @@ class BufferedChannelTest extends TestCase
             $chan->put($i);
         };
         
-        Dispatcher::map($input, $cb)->block(false)->limit(3)->params($chan)->start();
+        $map = new TaskMap($input, $cb);
+        $map->block(false)->limit(3)->params($chan)->start();
 
         // wait for all tasks to complete and then print each result.	
         $tally = 0;

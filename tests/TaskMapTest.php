@@ -19,14 +19,14 @@ declare(strict_types=1);
 */
 
 use PHPUnit\Framework\TestCase;
-use sqonk\phext\detach\Dispatcher;
+use sqonk\phext\detach\TaskMap;
 
 class TaskMapTest extends TestCase
 {   
     protected function runMap($amount, bool $block, int $limit = 0)
     {
         $range = range(1, $amount);
-        $map = Dispatcher::map($range, function($i) {
+        $map = new TaskMap($range, function($i) {
         	return $i;
         });
         $map->block($block);
