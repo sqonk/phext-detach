@@ -52,54 +52,92 @@ Documentation
 
 ## Examples
 
-Basic usage with an anonymous function as a callback.
+Basic usage. Two tasks printing to output at the same time.
 
 ```php
-$task = detach (function() {
-    foreach (range(1, 10) as $i)
-        print " $i ";
-});
+function printNumbers() {
+   foreach (range(1, 10) as $i)
+      print " $i ";
+}
+
+$task = detach ('printNumbers');
 
 println('waiting');
 while (! $task->complete()) {
   print '.';
 }
 println("\n", 'done');
+/*
+prints: (output may vary slightly depending on the hardware)
+....................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................... 1 ....... 2 . 3  4 . 5 . 6 . 7  8 . 9 .... 10 .................................................................................................................................................................................................................................................................................................................
+*/
 ```
 
  
 
-Generate 10 tasks, each returning a random number to the parent process.
+Generate 10 tasks, each returning square of the number passed in.
 
 ``` php
 // generate 10 seperate tasks, all of which return a random number.
 foreach (range(1, 10) as $i)
+{
   detach (function() use ($i) {
-     usleep(rand(100, 1000));
-     return [$i, rand(1, 4)];
-});
+    usleep(rand(100, 1000));
+    return [$i, $i ** 2];
+  }); 
+}
 
 // wait for all tasks to complete and then print each result.	
-foreach (detach_wait() as [$i, $rand])
-  println("$i random number was $rand");	
+foreach (detach_wait() as [$i, $square])
+  println("$i: square is $square");	
+/*
+prints:
+1: square is 1
+2: square is 4
+3: square is 9
+4: square is 16
+5: square is 25
+6: square is 36
+7: square is 49
+8: square is 64
+9: square is 81
+10: square is 100
+*/
 ```
 
 
 
-The same example but with the use of `Dispatcher::map`
+The same example but with the use of `TaskMap`
 
 ```php
 use sqonk\phext\detach\Dispatcher as dispatch;
 
-// generate 10 seperate tasks, all of which return a random number.
-$r = dispatch::map(range(1, 10), function($i) {
-  usleep(rand(100, 1000));
-  return [$i, rand(1, 4)];
-})->start();
+use sqonk\phext\detach\TaskMap;
 
-// wait for all tasks to complete and then print each result.	
-foreach ($r as [$i, $rand])
-  println("$i random number was $rand");	
+$numbers = range(1, 10);
+$map = new TaskMap($numbers, function($i) {
+  usleep(rand(100, 1000));
+  return [$i, $i ** 2];
+});
+
+// The TaskMap by default will block until all tasks have completed.
+$results = $map->start();
+
+foreach ($results as [$i, $square])
+  println("$i: square is $square");	
+/*
+prints:
+1: square is 1
+2: square is 4
+3: square is 9
+4: square is 16
+5: square is 25
+6: square is 36
+7: square is 49
+8: square is 64
+9: square is 81
+10: square is 100
+*/
 ```
 
 
@@ -107,24 +145,66 @@ foreach ($r as [$i, $rand])
 .. or a more complex version using non-blocking and a pool limit of 3.
 
 ```php
-use sqonk\phext\detach\Dispatcher as dispatch;
-use sqonk\phext\detach\BufferedChannel;
+use sqonk\phext\detach\TaskMap;
 
-function addFive($i, $chan) 
-{
+$numbers = range(1, 10);
+$map = new TaskMap($numbers, function($i) {
   usleep(rand(100, 1000));
-  $chan->put([$i, $i+5]);
-};
+  return [$i, $i ** 2];
+});
 
-// generate 10 seperate tasks, all of which return the number passed in + 5.
-$chan = new BufferedChannel;
-$chan->capacity(10); // we'll be waiting on a maximum of 10 inputs.
+// When non-blocking and running a limited pool, we 
+// receive a BufferedChannel that will receive results as each task completes.
+$channel = $map->limit(3)->block(false)->start();
 
-dispatch::map(range(1, 10), 'addFive')->limit(3)->block(false)->params($chan)->start();
+while ($r = $channel->get())
+  println("{$r[0]}: square is {$r[1]}");
+/*
+prints: (order of results returned will vary with non-blocking)
+2: square is 4
+3: square is 9
+4: square is 16
+1: square is 1
+5: square is 25
+7: square is 49
+9: square is 81
+8: square is 64
+6: square is 36
+10: square is 100
+*/
+```
 
-// wait for all tasks to complete and then print each result.	
-while ($r = $chan->get(2))
-  println($r[0], 'number is:', $r[1]);
+
+
+The same example as above but using the Dispatcher interface and PHP8's named parameters.
+
+```php
+use sqonk\phext\detach\Dispatcher as dispatch;
+
+$numbers = range(1, 10);
+
+// When non-blocking and running a limited pool, we 
+// receive a BufferedChannel that will receive results as each task completes.
+$channel = dispatch::map(data:$numbers, limit:3, block:false, callback:function($i) {
+  usleep(rand(100, 1000));
+  return [$i, $i ** 2];
+});
+
+while ($r = $channel->get())
+  println("{$r[0]}: square is {$r[1]}");
+/*
+prints: (order of results returned will vary with non-blocking)
+2: square is 4
+3: square is 9
+4: square is 16
+1: square is 1
+5: square is 25
+7: square is 49
+9: square is 81
+8: square is 64
+6: square is 36
+10: square is 100
+*/
 ```
 
 
