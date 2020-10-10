@@ -29,7 +29,7 @@ $ composer require sqonk/phext-detach
 
 ## Updating from V0.4
 
-Release 0.5+ adjusts the way Dispatcher::map() works so that it automatically builds and starts the TaskMap, return the result of ->start() on the map object. It's parameters have also been expanded to accept the various TaskMap configuration options directly, in preparation for named parameters in PHP8.
+Release 0.5+ adjusts the way Dispatcher::map() works so that it automatically builds and starts the TaskMap, returning the result of `->start()` on the map object. Its parameters have also been expanded to accept the various TaskMap configuration options directly, in preparation for named parameters in PHP8.
 
 
 
@@ -78,7 +78,7 @@ prints: (output may vary slightly depending on the hardware)
 Generate 10 tasks, each returning square of the number passed in.
 
 ``` php
-// generate 10 seperate tasks, all of which return a random number.
+// generate 10 seperate tasks, all of which return the square of the number passed in.
 foreach (range(1, 10) as $i)
 {
   detach (function() use ($i) {
@@ -107,7 +107,7 @@ prints:
 
 
 
-The same example but with the use of `TaskMap`
+The same example but with the use of a `TaskMap`
 
 ```php
 use sqonk\phext\detach\Dispatcher as dispatch;
