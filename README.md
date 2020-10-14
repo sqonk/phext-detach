@@ -52,6 +52,8 @@ Documentation
 
 ## Examples
 
+Example 1
+
 Basic usage. Two tasks printing to output at the same time.
 
 ```php
@@ -74,6 +76,10 @@ prints: (output may vary slightly depending on the hardware)
 ```
 
  
+
+------
+
+Example 2
 
 Generate 10 tasks, each returning square of the number passed in.
 
@@ -105,7 +111,9 @@ prints:
 */
 ```
 
+------
 
+Example 3
 
 The same example but with the use of a `TaskMap`
 
@@ -140,7 +148,9 @@ prints:
 */
 ```
 
+------
 
+Example 4
 
 .. or a more complex version using non-blocking and a pool limit of 3.
 
@@ -174,7 +184,9 @@ prints: (order of results returned will vary with non-blocking)
 */
 ```
 
+------
 
+Example 5
 
 The same example as above but using the Dispatcher interface and PHP8's named parameters.
 
@@ -207,7 +219,9 @@ prints: (order of results returned will vary with non-blocking)
 */
 ```
 
+------
 
+Example 6
 
 This example illustrates the use of Channels to control flow between the parent and two sub-tasks. 
 
@@ -249,7 +263,9 @@ println($chan2->get());
 // will output 100.
 ```
 
+------
 
+Example 7
 
 If you wish to go the object-orientated route you can extend the Task class and manage the execuation yourself.
 
