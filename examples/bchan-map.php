@@ -18,7 +18,7 @@
 */
 require '../vendor/autoload.php';
 
-use sqonk\phext\detach\Dispatcher as dispatch;
+use sqonk\phext\detach\TaskMap;
 use sqonk\phext\detach\BufferedChannel;
 
 /*
@@ -42,8 +42,8 @@ $cb = function($i, $chan) {
     $chan->put($i);
 };
 
-
-dispatch::map($input, $cb)->block(false)->params($chan)->start();
+$tm = new TaskMap($input, $cb);
+$tm->block(false)->params($chan)->start();
 
 // wait for all tasks to complete and then print each result.
 $tally = 0;	

@@ -18,7 +18,7 @@
 */
 require '../vendor/autoload.php';
 
-use sqonk\phext\detach\Dispatcher as dispatch;
+use sqonk\phext\detach\TaskMap;
 use sqonk\phext\detach\BufferedChannel;
 
 /*
@@ -42,7 +42,8 @@ $input = range(1, 100);
 $chan = new BufferedChannel;
 $chan->capacity(count($input)); // we'll be waiting on a maximum of 10 inputs.
 
-dispatch::map($input, 'gen')->block(false)->limit(3)->params($chan)->start();
+$tm = new TaskMap($input, 'gen');
+$tm->block(false)->limit(3)->params($chan)->start();
 
 // wait for all tasks to complete and then print each result.	
 $tally = 0;
