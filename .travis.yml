@@ -8,11 +8,7 @@ env:
     matrix:
         - COMPOSER_FLAGS="--prefer-lowest"
 
-before_install: 
-    pecl install apcu
-    pecl install posix
-    pecl install pcntl
-    phpenv config-add tests/travis.ini
+before_install: phpenv config-add tests/travis.ini
         
 install:
     - travis_retry composer update ${COMPOSER_FLAGS}
