@@ -62,11 +62,11 @@ class Channel
      */
     public function close(): Channel
     {
-        if (! $this->open)
-            return $this;
-        
-        $this->set(self::CHAN_SIG_CLOSE);
-        $this->open = false;
+        if ($this->open)
+        {
+            $this->set(self::CHAN_SIG_CLOSE);
+            $this->open = false;
+        }    
         
         return $this;
     }

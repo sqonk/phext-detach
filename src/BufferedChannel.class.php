@@ -112,9 +112,8 @@ class BufferedChannel
      */
     public function close(): BufferedChannel
     {
-        if (! $this->open)
-            return $this;
-        $this->set(self::CHAN_SIG_CLOSE);
+        if ($this->open)
+            $this->set(self::CHAN_SIG_CLOSE);
         
         return $this;
     }
