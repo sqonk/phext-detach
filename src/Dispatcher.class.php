@@ -112,8 +112,10 @@ class Dispatcher
      */
     static public function wait($tasks = null)
     {
-		if (! $tasks) 
-			$tasks = self::$threads;
+		if (! $tasks) {
+		    self::cleanup();
+            $tasks = self::$threads;
+		}
         
         if (is_array($tasks) && count($tasks) == 0)
             return;
@@ -155,8 +157,10 @@ class Dispatcher
      */
 	static public function wait_any(?array $tasks = null)
 	{
-		if (! $tasks) 
-			$tasks = self::$threads;
+		if (! $tasks) {
+		    self::cleanup();
+            $tasks = self::$threads;
+		}
 		
 		if (count($tasks) == 0)
 			return;
