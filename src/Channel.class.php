@@ -42,7 +42,7 @@ class Channel
 	}
 
 
-    protected function _synchronised($callback)
+    protected function _synchronised(callable $callback): void
     {
         $lock = "{$this->key}.lock";
         $pid = detach_pid();
@@ -60,7 +60,7 @@ class Channel
     /**
      * Close off the channel, signalling to the receiver that no further values will be sent.
      */
-    public function close()
+    public function close(): Channel
     {
         if (! $this->open)
             return $this;
@@ -75,7 +75,7 @@ class Channel
      * Pass a value into the channel. This method will block until the
      * channel is free to receive new data again.
      */
-    public function set($value) 
+    public function set($value): Channel
     {
         if (! $this->open)
             return $this;
@@ -103,7 +103,7 @@ class Channel
 	/**
 	 * Alias for Channel::set().
 	 */
-	public function put($value)
+	public function put($value): Channel
 	{
 		$this->set($value);
 		return $this;

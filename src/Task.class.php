@@ -91,7 +91,7 @@ class Task
                 apcu_delete($key);
     }
 
-    protected function key($suffix)
+    protected function key($suffix): string
     {
         return "TASKID-{$this->pid}-{$this->uuid}_$suffix";
     }
@@ -99,22 +99,16 @@ class Task
 	/**
 	 * Get or set the callback for the child process to run.
 	 */
-	public function setRunnable(callable $callback = null)
+	public function setRunnable(callable $callback): void
 	{
-		if ($callback) {
-			if (is_callable($callback)) {
-				$this->callback = $callback;
-				return $this;
-			}
-			throw new \Exception('You must specify a valid function name that can be called from the current scope.');
-		}
+		$this->callback = $callback;
 	}
 	
 	/**
 	 * Get the current callback method. This may either be a callable 
 	 * or a string depending upon what you have previously set.
 	 */
-	public function runnable()
+	public function runnable(): callable
 	{
 		return $this->callback;
 	}
@@ -122,7 +116,7 @@ class Task
     /**
      * Returns the process id (pid) of the child process.
      */
-    public function pid() 
+    public function pid(): string
 	{
         return $this->pid;
     }
@@ -130,7 +124,7 @@ class Task
     /**
      * Checks if the child process is alive.
      */
-    public function isAlive() 
+    public function isAlive(): bool
 	{
         return pcntl_waitpid($this->pid, $status, WNOHANG) === 0;
     }
@@ -138,7 +132,7 @@ class Task
 	/**
 	 * A task has completed when it was started but is no longer alive.
 	 */
-	public function complete()
+	public function complete(): bool
 	{
 		return $this->started and ! $this->isAlive();
 	}
@@ -165,7 +159,7 @@ class Task
      * -- parameters:
      * @param $args The parameters to pass to the task's callback when it is executed on the child process.
      */
-    public function start(array $args = []) 
+    public function start(array $args = []): void
 	{	
         if (! self::$envPassed)
             self::_checkRequirements();
@@ -205,7 +199,7 @@ class Task
         }
     }
     
-    protected function _synchronised($suffix, $callback)
+    protected function _synchronised($suffix, $callback): void
     {
         $lock = $this->key($suffix).".lock";
         $pid = self::$currentPID; 
@@ -221,7 +215,7 @@ class Task
     }
 	
 	// Send data to the desired process (parent or child).
-	protected function write($suffix, $data)
+	protected function write($suffix, $data): void
 	{
         $written = false;
         $key = $this->key($suffix);
@@ -237,14 +231,14 @@ class Task
 	}
 	
 	// Called from child.
-	protected function sendToParent($data)
+	protected function sendToParent($data): void
 	{
 		$this->write(self::pPARENT, $data);
 	}
 	
 	
 	// Called from parent.
-	protected function sendToChild($data)
+	protected function sendToChild($data): void
 	{
 		$this->write(self::pCHILD, $data);
 	}

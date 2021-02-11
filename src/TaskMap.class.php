@@ -53,7 +53,7 @@ class TaskMap
      * 
      * The default is TRUE.
      */
-    public function block(bool $waitForCompletion)
+    public function block(bool $waitForCompletion): TaskMap
     {
         $this->block = $waitForCompletion;
         return $this;
@@ -63,7 +63,7 @@ class TaskMap
      * A provide a series of auxiliary parameters that are provided to the callback
      * in addition to the main element passed in.
      */
-    public function params(...$args)
+    public function params(...$args): TaskMap
     {
         $this->params = $args;
         return $this;
@@ -76,7 +76,7 @@ class TaskMap
      * 
      * The default is 0.
      */
-    public function limit(int $limit)
+    public function limit(int $limit): TaskMap
     {
         $this->limit = $limit;
         return $this;

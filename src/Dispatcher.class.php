@@ -45,7 +45,7 @@ class Dispatcher
      * 
      * @return The newly created and started task.
      */
-    static public function detach(callable $callback, array $args = [])
+    static public function detach(callable $callback, array $args = []): Task
     {
         self::cleanup(); // remove any completed threads from the register. 
         
@@ -84,13 +84,13 @@ class Dispatcher
     }
     
     // Internal function.
-    static public function _clear()
+    static public function _clear(): void
     {
         self::$threads = [];
     }
     
     // Internal function.
-    static private function cleanup()
+    static private function cleanup(): void
     {
 		$keys = array_keys(self::$threads);
         for ($i = 0; $i < count($keys); $i++)

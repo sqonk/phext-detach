@@ -32,7 +32,7 @@
  * 
  * @return The newly created and started task.
  */
-function detach(callable $callback, array $args = []) 
+function detach(callable $callback, array $args = []): \sqonk\phext\detach\Task
 {
     return \sqonk\phext\detach\Dispatcher::detach($callback, $args);
 }
@@ -64,7 +64,7 @@ function detach_pid()
 /**
  * Immediately stop all running tasks.
  */
-function detach_kill()
+function detach_kill(): void
 {
     \sqonk\phext\detach\Dispatcher::kill();
 }

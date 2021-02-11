@@ -47,7 +47,7 @@ class BufferedChannel
         $this->capkey = "$this->key.cap";
 	}
     
-    protected function _synchronised($callback)
+    protected function _synchronised(callable $callback): void
     {
         $lock = "{$this->key}.lock";
         $pid = detach_pid();
@@ -69,14 +69,14 @@ class BufferedChannel
      * 
      * Every time this method is called it will reset the write count to 0.
      */
-	public function capacity(int $totalDeposits)
+	public function capacity(int $totalDeposits): BufferedChannel
 	{
 		apcu_store($this->wckey, 0);
         apcu_store($this->capkey, $totalDeposits);
         return $this;
 	}
     
-    protected function _writeCount()
+    protected function _writeCount(): int
     {
         $count = 0;
         if (apcu_exists($this->wckey)) {
@@ -87,7 +87,7 @@ class BufferedChannel
         return $count;
     }
     
-    protected function _increment($amount = 1)
+    protected function _increment($amount = 1): void
     { 
         if (apcu_exists($this->capkey)) {
             $current = $this->_writeCount();
@@ -96,13 +96,12 @@ class BufferedChannel
         }
     }
     
-    protected function _hitCapcity()
+    protected function _hitCapcity(): bool
     {
         if (apcu_exists($this->capkey)) {
             $v = apcu_fetch($this->capkey, $ok);
             if ($ok) {
-                $hit = $this->_writeCount() >= $v;
-                return $hit;
+                return $this->_writeCount() >= $v;
             }
         }
         return false;
@@ -111,7 +110,7 @@ class BufferedChannel
     /**
      * Close off the channel, signalling to the receiver that no further values will be sent.
      */
-    public function close()
+    public function close(): BufferedChannel
     {
         if (! $this->open)
             return $this;
@@ -123,7 +122,7 @@ class BufferedChannel
     /**
      * Queue a value onto the channel, causing all readers to wake up.
      */
-    public function set($value) 
+    public function set($value): BufferedChannel
     { 
         /*
             Rules:
@@ -157,7 +156,7 @@ class BufferedChannel
 	/**
 	 * Alias for Channel::set().
 	 */
-	public function put($value)
+	public function put($value): BufferedChannel
 	{
 		return $this->set($value);
 	}
@@ -168,7 +167,7 @@ class BufferedChannel
      * If you have a large number of items to push onto the queue at once then this
      * method will be faster than calling set() for every element in the array.
      */
-    public function bulk_set(array $values)
+    public function bulk_set(array $values): BufferedChannel
     {
         /*
             Rules:
