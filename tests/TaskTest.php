@@ -19,7 +19,7 @@ declare(strict_types=1);
 */
 
 use PHPUnit\Framework\TestCase;
-use sqonk\phext\detach\Dispatcher;
+use sqonk\phext\detach\{Dispatcher,Task};
 
 class TaskTest extends TestCase
 {
@@ -30,6 +30,26 @@ class TaskTest extends TestCase
         });
         $r = detach_wait();
         $this->assertEquals(100, $r);
+        
+        detach_kill();
+    }
+    
+    public function testReturnType()
+    {
+        $t = detach(function() {
+            sleep(1);
+        });
+        $this->assertSame(Task::class, get_class($t));
+    }
+    
+    function testCompleteCheck() {
+        $t = new Task(function() {
+            sleep(1);
+        });
+        $this->assertSame(false, $t->complete());
+        $t->start();
+        detach_wait($t);
+        $this->assertSame(true, $t->complete());
         
         detach_kill();
     }
