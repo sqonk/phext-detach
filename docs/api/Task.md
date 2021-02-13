@@ -47,7 +47,7 @@ This merely creates the object. To schedule it for execution you must call `star
 ------
 ##### setRunnable
 ```php
-public function setRunnable(callable $callback = null) 
+public function setRunnable(callable $callback) : void
 ```
 Get or set the callback for the child process to run.
 
@@ -55,7 +55,7 @@ Get or set the callback for the child process to run.
 ------
 ##### runnable
 ```php
-public function runnable() 
+public function runnable() : callable
 ```
 Get the current callback method. This may either be a callable or a string depending upon what you have previously set.
 
@@ -63,7 +63,7 @@ Get the current callback method. This may either be a callable or a string depen
 ------
 ##### pid
 ```php
-public function pid() 
+public function pid() : string
 ```
 Returns the process id (pid) of the child process.
 
@@ -71,7 +71,7 @@ Returns the process id (pid) of the child process.
 ------
 ##### isAlive
 ```php
-public function isAlive() 
+public function isAlive() : bool
 ```
 Checks if the child process is alive.
 
@@ -79,7 +79,7 @@ Checks if the child process is alive.
 ------
 ##### complete
 ```php
-public function complete() 
+public function complete() : bool
 ```
 A task has completed when it was started but is no longer alive.
 
@@ -103,7 +103,7 @@ Do we have result data waiting in the pipe that has not been read in by the pare
 ------
 ##### start
 ```php
-public function start(array $args = []) 
+public function start(array $args = []) : void
 ```
 Start the task on a spwaned child process, being a clone of the parent.
 

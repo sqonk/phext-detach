@@ -13,7 +13,7 @@ The Dispatch class acts as a static interface to the various classes of the deta
 ------
 ##### detach
 ```php
-static public function detach(callable $callback, array $args = []) 
+static public function detach(callable $callback, array $args = []) : sqonk\phext\detach\Task
 ```
 Execute the provided callback on a seperate process.
 
@@ -30,19 +30,25 @@ It is useful for environnments that need to run a block of code in parallel.
 ------
 ##### map
 ```php
-static public function map(iterable $data, callable $callback) 
+static public function map(iterable $data, callable $callback, array $params = null, bool $block = true, int $limit = 0) 
 ```
 Map an array of items to be processed each on a seperate task. The receiving callback function should take at least one parameter.
 
-This method returns a TaskMap object that can be further configured.
+This method creates a new task map and immediately starts it.
 
-@see TaskMap class for more options.
+- **$data** The array of items to be spread over seperate tasks.
+- **$callback** The callback method that will receive each item on the seperate task.
+- **$params** An optional array of additional [constant] parameters that will be passed to the callback.
+- **$block** Whether the main program will block execution until all tasks have completed.
+- **$limit** Set the maximum number of tasks that may run concurrently. 0 = unlimited.
+
+**Returns:**  array|BufferedChannel The result is changes based on the configuration of the task map. @see TaskMap class for more options. @see TaskMap::start() for information on what is returned.
 
 
 ------
 ##### _clear
 ```php
-static public function _clear() 
+static public function _clear() : void
 ```
 No documentation available.
 

@@ -10,7 +10,7 @@
 ------
 ##### detach
 ```php
-function detach(callable $callback, array $args = []) 
+function detach(callable $callback, array $args = []) : sqonk\phext\detach\Task
 ```
 Execute the provided callback on a seperate process.
 
@@ -47,7 +47,7 @@ Returns the PID of the current process the caller is on. This is set to `NULL` f
 ------
 ##### detach_kill
 ```php
-function detach_kill() 
+function detach_kill() : void
 ```
 Immediately stop all running tasks.
 

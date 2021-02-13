@@ -23,7 +23,7 @@ Construct a new map with the provided array of items for distribution to a seper
 ------
 ##### block
 ```php
-public function block(bool $waitForCompletion) 
+public function block(bool $waitForCompletion) : sqonk\phext\detach\TaskMap
 ```
 Set whether the main program will block execution until all tasks have completed.
 
@@ -33,7 +33,7 @@ The default is `TRUE`.
 ------
 ##### params
 ```php
-public function params($args) 
+public function params($args) : sqonk\phext\detach\TaskMap
 ```
 A provide a series of auxiliary parameters that are provided to the callback in addition to the main element passed in.
 
@@ -41,7 +41,7 @@ A provide a series of auxiliary parameters that are provided to the callback in 
 ------
 ##### limit
 ```php
-public function limit(int $limit) 
+public function limit(int $limit) : sqonk\phext\detach\TaskMap
 ```
 Set the maximum number of tasks that may run concurrently. If the number is below 1 then no limit is applied and as many tasks as there are elements in the data array will be created spawned.
 

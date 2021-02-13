@@ -23,7 +23,7 @@ Construct a new Channel.
 ------
 ##### close
 ```php
-public function close() 
+public function close() : sqonk\phext\detach\Channel
 ```
 Close off the channel, signalling to the receiver that no further values will be sent.
 
@@ -31,7 +31,7 @@ Close off the channel, signalling to the receiver that no further values will be
 ------
 ##### set
 ```php
-public function set($value) 
+public function set($value) : sqonk\phext\detach\Channel
 ```
 Pass a value into the channel. This method will block until the channel is free to receive new data again.
 
@@ -39,7 +39,7 @@ Pass a value into the channel. This method will block until the channel is free 
 ------
 ##### put
 ```php
-public function put($value) 
+public function put($value) : sqonk\phext\detach\Channel
 ```
 Alias for Channel::set().
 

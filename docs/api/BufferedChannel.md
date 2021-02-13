@@ -28,7 +28,7 @@ Construct a new BufferedChannel.
 ------
 ##### capacity
 ```php
-public function capacity(int $totalDeposits) 
+public function capacity(int $totalDeposits) : sqonk\phext\detach\BufferedChannel
 ```
 Set an arbitrary limit on the number of times data will be ready from the channel. Once the limit has been reached the channel will be closed.
 
@@ -38,7 +38,7 @@ Every time this method is called it will reset the write count to 0.
 ------
 ##### close
 ```php
-public function close() 
+public function close() : sqonk\phext\detach\BufferedChannel
 ```
 Close off the channel, signalling to the receiver that no further values will be sent.
 
@@ -46,7 +46,7 @@ Close off the channel, signalling to the receiver that no further values will be
 ------
 ##### set
 ```php
-public function set($value) 
+public function set($value) : sqonk\phext\detach\BufferedChannel
 ```
 Queue a value onto the channel, causing all readers to wake up.
 
@@ -54,7 +54,7 @@ Queue a value onto the channel, causing all readers to wake up.
 ------
 ##### put
 ```php
-public function put($value) 
+public function put($value) : sqonk\phext\detach\BufferedChannel
 ```
 Alias for Channel::set().
 
@@ -62,7 +62,7 @@ Alias for Channel::set().
 ------
 ##### bulk_set
 ```php
-public function bulk_set(array $values) 
+public function bulk_set(array $values) : sqonk\phext\detach\BufferedChannel
 ```
 Queue a bulk set of values onto the channel, causing all readers to wake up.
 
