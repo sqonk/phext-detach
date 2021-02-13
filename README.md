@@ -49,12 +49,11 @@ Documentation
 [API Reference](docs/api/index.md) now available.
 
 
-
 ## Examples
 
-Example 1
+#### Example 1 - Basic task creation
 
-Basic usage. Two tasks printing to output at the same time.
+Two tasks printing to output at the same time. The main script loops and prints a '.' until the sub-task is complete.
 
 ```php
 function printNumbers() {
@@ -79,43 +78,44 @@ prints: (output may vary slightly depending on the hardware)
 
 ------
 
-Example 2
+#### Example 2 - Waiting for tasks to complete
 
-Generate 10 tasks, each returning square of the number passed in.
+Pausing the main script to wait for one or more tasks can be done with `detach_wait` . 
+
+The following example spawns 5 seperate tasks and then demonstrates how to wait for a subset of the tasks before continuing. It then waits for the final task to complete.
 
 ``` php
-// generate 10 seperate tasks, all of which return the square of the number passed in.
-foreach (range(1, 10) as $i)
-{
-  detach (function() use ($i) {
-    usleep(rand(100, 1000));
-    return [$i, $i ** 2];
-  }); 
+function sleepAndPrint(int $amount) {
+    sleep($amount);
+    println('waited for ', $amount, 'secs');
 }
 
-// wait for all tasks to complete and then print each result.	
-foreach (detach_wait() as [$i, $square])
-  println("$i: square is $square");	
-/*
-prints:
-1: square is 1
-2: square is 4
-3: square is 9
-4: square is 16
-5: square is 25
-6: square is 36
-7: square is 49
-8: square is 64
-9: square is 81
-10: square is 100
-*/
+function main() {
+    detach (callback:'sleepAndPrint', args:[6]);
+    
+    $tasks[] = detach (callback:'sleepAndPrint', args:[4]);
+    $tasks[] = detach (callback:'sleepAndPrint', args:[3]);
+    $tasks[] = detach (callback:'sleepAndPrint', args:[2]);
+    $tasks[] = detach (callback:'sleepAndPrint', args:[1]);
+
+    println('waiting for 4 tasks..');
+    detach_wait(tasks:$tasks);
+
+    println('done, now waiting for last one..');
+    // Pass in nothing to wait for all running tasks to complete.
+    detach_wait(); 
+}
+
+
+main();
+
 ```
 
 ------
 
-Example 3
+#### Example 3 - Automatically mapping a dataset onto seperate tasks
 
-The same example but with the use of a `TaskMap`
+A `TaskMap` allows you to finely control the distribution of a set of data onto one or more tasks for processing.
 
 ```php
 use sqonk\phext\detach\Dispatcher as dispatch;
@@ -150,9 +150,11 @@ prints:
 
 ------
 
-Example 4
+#### Example 4 - Efficient use of resources
 
-.. or a more complex version using non-blocking and a pool limit of 3.
+By default a `TaskMap` will spawn as many tasks as there are items in the data array. If your dataset contains more than a small number of items, and the work being done on each item is relatively minimal, it is more efficient to limit the number of running tasks to a smaller number and have the TaskMap queue the distribution of the elements to each task for processing as they become free.
+
+This example limits the number of tasks to 3 in *non-blocking* mode, which receives the results via a buffered channel.
 
 ```php
 use sqonk\phext\detach\TaskMap;
@@ -184,11 +186,11 @@ prints: (order of results returned will vary with non-blocking)
 */
 ```
 
-------
 
-Example 5
 
-The same example as above but using the Dispatcher interface and PHP8's named parameters.
+Here is the same example as above but using the `Dispatcher::map` interface and PHP 8's named parameters. 
+
+Note that when calling with this method that the TaskMap is automatically started prior to returning from the call.
 
 ```php
 use sqonk\phext\detach\Dispatcher as dispatch;
@@ -221,7 +223,9 @@ prints: (order of results returned will vary with non-blocking)
 
 ------
 
-Example 6
+#### Example 6 - Sharing Data
+
+Because each task is a forked process and not a traditional thread, they do not share memory and variables between one-another. Instead they share data by communicating.
 
 This example illustrates the use of Channels to control flow between the parent and two sub-tasks. 
 
@@ -265,7 +269,7 @@ println($chan2->get());
 
 ------
 
-Example 7
+#### Example 7 - Manual Creation
 
 If you wish to go the object-orientated route you can extend the Task class and manage the execuation yourself.
 
@@ -309,17 +313,3 @@ If you are interested in how the library holds up compared to plain old single-t
 ## License
 
 The MIT License (MIT). Please see [License File](license.txt) for more information.
-
-
-
-## Alternatives
-
-The basis for this library is a modernised, rewritten and extended version of the "Thread" class originally written by Tudor Barbu. 
-
-Detach is *not* an asynchronous or event-driven IO framework. [ReactPHP](https://reactphp.org) and [Amp](https://amphp.org) both provide comprehensive solutions in this space.
-
-If you have the ability to install PECL extensions there is a native concurrency extension for PHP 7.2+ called [Parallel](https://github.com/krakjoe/parallel) .
-
-The [spatie/async](https://github.com/spatie/async) library provides an alternative solution that also uses PCNTL forking but with an API and structure that may be more familiar to many developers.
-
-Finally, there is also the [Worker Pool](https://packagist.org/packages/qxsch/worker-pool) package.
