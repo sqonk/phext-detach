@@ -177,7 +177,7 @@ class Dispatcher
     /**
      * Immediately stop all running tasks.
      */
-    static public function kill()
+    static public function kill(): void
     {
         foreach (self::$threads as $t) {
             if ($t->isAlive())
