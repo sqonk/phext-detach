@@ -42,7 +42,9 @@ This method creates a new task map and immediately starts it.
 - **$block** Whether the main program will block execution until all tasks have completed.
 - **$limit** Set the maximum number of tasks that may run concurrently. 0 = unlimited.
 
-**Returns:**  array|BufferedChannel The result is changes based on the configuration of the task map. @see TaskMap class for more options. @see TaskMap::start() for information on what is returned.
+**Returns:**  array|BufferedChannel The result is changes based on the configuration of the task map. 
+**See:**  TaskMap class for more options. 
+**See:**  TaskMap::start() for information on what is returned.
 
 
 ------
@@ -80,7 +82,7 @@ Returns the result of the first task in the array to finish.
 ------
 ##### kill
 ```php
-static public function kill() 
+static public function kill() : void
 ```
 Immediately stop all running tasks.
 
