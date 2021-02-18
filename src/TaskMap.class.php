@@ -86,9 +86,7 @@ class TaskMap
     {
         // migrate the data to process over to a buffered channel that will feed the tasks.
         $chan = new BufferedChannel;
-        foreach ($this->data as $item)
-            $chan->put($item);
-        $chan->close();
+        $chan->bulk_set($this->data)->close();
         
         $outBuffer = new BufferedChannel;
         $outBuffer->capacity(count($this->data));
