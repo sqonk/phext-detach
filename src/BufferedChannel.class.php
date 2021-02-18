@@ -87,7 +87,7 @@ class BufferedChannel
         return $count;
     }
     
-    protected function _increment($amount = 1): void
+    protected function _increment(int $amount = 1): void
     { 
         if (apcu_exists($this->capkey)) {
             $current = $this->_writeCount();
