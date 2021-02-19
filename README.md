@@ -27,13 +27,35 @@ $ composer require sqonk/phext-detach
 
 
 
-## Updating from V0.4
+### Updating from V1.0
+
+Release 1.1 changes the value returned from both a Channel and a BufferedChannel when they are closed. Previously they would return `NULL`, now they return the constant `CHAN_CLOSED`. This was done in order to clearly differentiate between null values intentionally inserted into a channel and channel closure.
+
+Code written previously like this:
+
+```php
+while ($value = $chan->get()) { 
+	 // process value.
+}
+```
+
+Should now be written as follows:
+
+```php
+while (($value = $chan->get()) !== CHAN_CLOSED) { 
+	 // process value.
+}
+```
+
+
+
+### Updating from V0.4
 
 Release 0.5+ adjusts the way Dispatcher::map() works so that it automatically builds and starts the TaskMap, returning the result of `->start()` on the map object. Its parameters have also been expanded to accept the various TaskMap configuration options directly, in preparation for named parameters in PHP8.
 
 
 
-## Updating from V0.3
+### Updating from V0.3
 
 Release 0.4+ is a significant update from previous versions. *It will break existing code that was built to use V0.3.*
 
