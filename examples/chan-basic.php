@@ -39,6 +39,6 @@ $input = range(1, 10);
 $chan = new Channel;
 detach ('gen', [$chan]);
 
-while ($r = $chan->next()) { 
+while (($r = $chan->next()) !== CHAN_CLOSED) { 
     println("out $r");
 }

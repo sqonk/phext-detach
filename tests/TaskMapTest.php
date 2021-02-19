@@ -39,7 +39,7 @@ class TaskMapTest extends TestCase
             {
                 $chan = $map->start();
                 $results = [];
-                while ($r = $chan->next())
+                while (($r = $chan->next()) != CHAN_CLOSED)
                     $results[] = $r;
             }
         }

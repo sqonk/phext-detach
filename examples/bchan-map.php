@@ -47,7 +47,7 @@ $tm->block(false)->params($chan)->start();
 
 // wait for all tasks to complete and then print each result.
 $tally = 0;	
-while ($r = $chan->get()) {
+while (($r = $chan->get()) !== CHAN_CLOSED) {
     $tally++;
     println("##RESULT: $r", 'tally', $tally);
 }

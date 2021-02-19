@@ -31,6 +31,7 @@ class ChannelTest extends TestCase
             foreach ($input as $i) {
                 $chan->put($i);
             }
+            $chan->close();
         };
 
         
@@ -38,7 +39,7 @@ class ChannelTest extends TestCase
         $chan = new Channel;
         detach ($gen, [$chan, $input]);
 
-        while ($r = $chan->next(2)) { 
+        while (($r = $chan->next(2)) !== CHAN_CLOSED) { 
             $this->assertSame($r, array_shift($input));
         }
         
@@ -128,7 +129,6 @@ class ChannelTest extends TestCase
         $this->assertSame(-5, $y);
         $this->assertSame(12, $x + $y);
         
-        
         detach_kill();
     }
     
@@ -144,7 +144,7 @@ class ChannelTest extends TestCase
         $chan = new Channel;
         detach($cannon, [$chan]);
         
-        while ($r = $chan->next())
+        while (($r = $chan->next()) != CHAN_CLOSED)
             $this->assertSame($r, array_shift($expected));
         
         detach_kill();

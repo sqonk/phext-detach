@@ -50,7 +50,7 @@ function main()
     $chan = new Channel;
     detach ('cannon', [$chan]);
     
-    while ($r = $chan->next()) {
+    while (($r = $chan->next()) !== CHAN_CLOSED) {
         $response = ($r > 8) ? ', it was too fast and the player missed.' : 'and the player hit it back.';
         println("Cannon fired a ball at the player at speed $r $response");
     }

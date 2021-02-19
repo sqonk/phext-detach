@@ -124,7 +124,7 @@ class Channel
     public function get($wait = true) 
     {
         if (! $this->open)
-            return null;
+            return CHAN_CLOSED;
         
 		$value = null;
         $started = time();
@@ -165,7 +165,7 @@ class Channel
         
         if ($value == self::CHAN_SIG_CLOSE)
         {
-            $value = null;
+            $value = CHAN_CLOSED;
             $this->open = false;
         }
         

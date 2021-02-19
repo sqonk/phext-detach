@@ -42,7 +42,7 @@ class BufferedChannelTest extends TestCase
 
         // wait for all tasks to complete and then print each result.	
         $tally = 0;
-        while ($r = $chan->get()) {
+        while (($r = $chan->get()) != CHAN_CLOSED) {
             $tally++;
         }
         
@@ -63,7 +63,7 @@ class BufferedChannelTest extends TestCase
         $chan = new BufferedChannel;
         detach($cannon, [$chan]);
         
-        while ($r = $chan->next())
+        while (($r = $chan->next()) != CHAN_CLOSED)
             $this->assertSame($r, array_shift($expected));
         
         detach_kill();
@@ -78,7 +78,7 @@ class BufferedChannelTest extends TestCase
             $chan->close();
         }, [$chan, $inputs]);
         
-        while ($r = $chan->get())
+        while (($r = $chan->get()) !== CHAN_CLOSED)
             $this->assertSame($r, array_shift($inputs));
     }
     
@@ -96,5 +96,7 @@ class BufferedChannelTest extends TestCase
         detach_wait();
         $results = $chan->get_all();
         $this->assertSame($inputs, $results);
+        
+        detach_kill();
     }
 }

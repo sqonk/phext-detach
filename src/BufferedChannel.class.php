@@ -213,7 +213,7 @@ class BufferedChannel
     public function get($wait = true) 
     {
 		if (! $this->open) 
-		    return null;
+		    return CHAN_CLOSED;
 		
 		$value = null;
         $started = time();
@@ -259,7 +259,7 @@ class BufferedChannel
         
         if ($value == self::CHAN_SIG_CLOSE)
         {
-            $value = null;
+            $value = CHAN_CLOSED;
             $this->open = false;
         }
         
@@ -289,7 +289,7 @@ class BufferedChannel
     public function get_all($wait = true) 
     {
 		if (! $this->open)
-			return null;
+			return CHAN_CLOSED;
 		
 		$values = null;
         $started = time();

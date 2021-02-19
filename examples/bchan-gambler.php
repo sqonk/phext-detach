@@ -64,7 +64,7 @@ function main()
     
     println('The gambler starts of with 30 at the table.');
     
-    while ($r = $chan->next()) 
+    while (($r = $chan->next()) !== CHAN_CLOSED) 
     {
         [$bet, $winnings, $cashLeft] = $r;
         $response = ($winnings > 0) ? " and won $winnings!" : '';

@@ -96,7 +96,7 @@ class TaskMap
         { 
             $tasks[] = Dispatcher::detach(function($feed, $out) {
                 
-                while (($item = $feed->next()) !== null)
+                while (($item = $feed->next()) !== CHAN_CLOSED)
                 {
                     $params = is_array($item) ? $item : [$item];
                     if ($this->params)

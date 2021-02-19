@@ -17,6 +17,8 @@
 * permissions and limitations under the License.
 */
 
+define('CHAN_CLOSED', '__CHANCLOSED__');
+
 /**
  * Execute the provided callback on a seperate process.
  * 
