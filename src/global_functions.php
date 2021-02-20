@@ -20,7 +20,7 @@
 define('CHAN_CLOSED', '__CHANCLOSED__');
 
 /**
- * Execute the provided callback on a seperate process.
+ * Execute the provided callback on a seperate process. This method is an alias for `Dispatcher::detach`.
  * 
  * Each call creates a Task, which is a spawned
  * subprocess that operates independently of the original process.
@@ -52,7 +52,7 @@ function detach(callable $callback, array $args = []): \sqonk\phext\detach\Task
  * @param $block Whether the main program will block execution until all tasks have completed.
  * @param $limit Set the maximum number of tasks that may run concurrently. 0 = unlimited.
  *
- * @return array|BufferedChannel The result is changes based on the configuration of the task map.
+ * @return array|BufferedChannel The result changes based on the configuration of the task map.
  * @see TaskMap class for more options.
  * @see TaskMap::start() for information on what is returned.
  */
@@ -86,7 +86,7 @@ function detach_pid()
 }
 
 /**
- * Immediately stop all running tasks.
+ * Immediately stop all running tasks. This method is an alias for `Dispatcher::kill`.
  */
 function detach_kill(): void
 {

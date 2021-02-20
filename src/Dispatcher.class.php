@@ -68,7 +68,7 @@ class Dispatcher
      * @param $block Whether the main program will block execution until all tasks have completed.
      * @param $limit Set the maximum number of tasks that may run concurrently. 0 = unlimited.
      *
-     * @return array|BufferedChannel The result is changes based on the configuration of the task map.
+     * @return array|BufferedChannel The result changes based on the configuration of the task map.
      * @see TaskMap class for more options.
      * @see TaskMap::start() for information on what is returned.
      */

@@ -42,7 +42,7 @@ This method creates a new task map and immediately starts it.
 - **$block** Whether the main program will block execution until all tasks have completed.
 - **$limit** Set the maximum number of tasks that may run concurrently. 0 = unlimited.
 
-**Returns:**  array|BufferedChannel The result is changes based on the configuration of the task map. 
+**Returns:**  array|BufferedChannel The result changes based on the configuration of the task map. 
 **See:**  TaskMap class for more options. 
 **See:**  TaskMap::start() for information on what is returned.
 
