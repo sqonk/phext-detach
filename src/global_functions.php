@@ -40,7 +40,29 @@ function detach(callable $callback, array $args = []): \sqonk\phext\detach\Task
 }
 
 /**
- * Wait for one or more currently running tasks to complete.
+ * Map an array of items to be processed each on a seperate task. The receiving callback function should take 
+ * at least one parameter. This method is an alias for `Dispatcher::map`.
+ * 
+ * This method creates a new task map and immediately starts it.
+ * 
+ * -- parameters:
+ * @param $data The array of items to be spread over seperate tasks.
+ * @param $callback The callback method that will receive each item on the seperate task.
+ * @param $params An optional array of additional [constant] parameters that will be passed to the callback. 
+ * @param $block Whether the main program will block execution until all tasks have completed.
+ * @param $limit Set the maximum number of tasks that may run concurrently. 0 = unlimited.
+ *
+ * @return array|BufferedChannel The result is changes based on the configuration of the task map.
+ * @see TaskMap class for more options.
+ * @see TaskMap::start() for information on what is returned.
+ */
+function detach_map(iterable $data, callable $callback, ?array $params = null, bool $block = true, int $limit = 0)
+{
+    return \sqonk\phext\detach\Dispatcher::map($data, $callback, $params, $block, $limit);
+}
+
+/**
+ * Wait for one or more currently running tasks to complete. This method is an alias for `Dispatcher::wait`.
  * 
  * This method will accept a single task or an array of tasks. If
  * nothing is passed in then it will wait for all currently
