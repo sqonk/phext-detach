@@ -109,7 +109,8 @@ function detach_nproc(): int
         else  {
             $command = 'nproc';
         }
-        $nproc = (int)rtrim(shell_exec($command));
+        $r = rtrim(shell_exec($command));
+        $nproc = is_numeric($r) ? (int)$r : 2;
     }
     
     return $nproc;
