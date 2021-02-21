@@ -50,13 +50,13 @@ function detach(callable $callback, array $args = []): \sqonk\phext\detach\Task
  * @param $callback The callback method that will receive each item on the seperate task.
  * @param $params An optional array of additional [constant] parameters that will be passed to the callback. 
  * @param $block Whether the main program will block execution until all tasks have completed.
- * @param $limit Set the maximum number of tasks that may run concurrently. 0 = unlimited.
+ * @param $limit Set the maximum number of tasks that may run concurrently. 0 = unlimited. Defaults to the number of phsyical CPU cores on the running system.
  *
  * @return array|BufferedChannel The result changes based on the configuration of the task map.
  * @see TaskMap class for more options.
  * @see TaskMap::start() for information on what is returned.
  */
-function detach_map(iterable $data, callable $callback, ?array $params = null, bool $block = true, int $limit = 0)
+function detach_map(iterable $data, callable $callback, ?array $params = null, bool $block = true, ?int $limit = null)
 {
     return \sqonk\phext\detach\Dispatcher::map($data, $callback, $params, $block, $limit);
 }
@@ -91,4 +91,26 @@ function detach_pid()
 function detach_kill(): void
 {
     \sqonk\phext\detach\Dispatcher::kill();
+}
+
+/**
+ * Return number of phsyical CPU cores present on the running system.
+ */
+function detach_nproc(): int
+{
+    static $nproc;
+    
+    if ($nproc === null) {
+        $os = strtolower(php_uname('s'));
+        if (starts_with($os, 'win'))
+            $command = 'echo %NUMBER_OF_PROCESSORS%';
+        else if (contains($os, 'darwin'))
+            $command = 'sysctl -n hw.physicalcpu';
+        else  {
+            $command = 'nproc';
+        }
+        $nproc = (int)rtrim(shell_exec($command));
+    }
+    
+    return $nproc;
 }

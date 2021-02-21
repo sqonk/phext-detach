@@ -27,7 +27,7 @@ use sqonk\phext\core\arrays;
  */
 class TaskMap
 {
-    protected $limit = 0;
+    protected $limit;
     protected $params;
     protected $block = true;
     
@@ -46,6 +46,9 @@ class TaskMap
     {
         $this->data = $data;
         $this->callback = $callback;
+        
+        // default the pool limit to the number of cores on the computer.
+        $this->limit = detach_nproc();
     }
     
     /**
@@ -72,11 +75,10 @@ class TaskMap
     /**
      * Set the maximum number of tasks that may run concurrently. If the number is below
      * 1 then no limit is applied and as many tasks as there are elements in the data array
-     * will be created spawned.
-     * 
-     * The default is 0.
+     * will be created spawned. NOTE that setting it to unlimited may have a detrimental affect
+     * on the performance of the code and the underlying system it is being run on. 
      */
-    public function limit(int $limit): TaskMap
+    public function limit(?int $limit): TaskMap
     {
         $this->limit = $limit;
         return $this;

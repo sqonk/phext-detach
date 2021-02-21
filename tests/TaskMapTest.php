@@ -23,16 +23,16 @@ use sqonk\phext\detach\TaskMap;
 
 class TaskMapTest extends TestCase
 {   
-    protected function runMap($amount, bool $block, int $limit = 0)
+    protected function runMap(int $amount, bool $block, ?int $limit)
     {
         $range = range(1, $amount);
         $map = new TaskMap($range, function($i) {
         	return $i;
         });
         $map->block($block);
-        if ($limit)
+        $map->limit($limit);
+        if ($limit or $limit === null)
         {
-            $map->limit($limit);
             if ($block)
                 $results = $map->start();
             else
@@ -45,6 +45,7 @@ class TaskMapTest extends TestCase
         }
         else
         {
+            // limit of 0 (no pool, unrestricted)
             $results = $map->start();
             if (! $block)
                 $results = detach_wait();
@@ -61,14 +62,26 @@ class TaskMapTest extends TestCase
         detach_kill(); 
     }
     
+    public function testNproc()
+    {
+        $nproc = detach_nproc();
+        $this->assertSame(true, is_int($nproc));
+        $this->assertGreaterThan(0, $nproc);
+    }
+    
     public function testBlockingNoLimitWith10()
     {
-        $this->runMap(10, true);
+        $this->runMap(10, true, 0);
+    }
+    
+    public function testBlockingDefaultLimitWith10()
+    {
+        $this->runMap(10, true, null);
     }
     
     public function testBlockingNoLimitWith100()
     {
-        $this->runMap(100, true);
+        $this->runMap(100, true, 0);
     }
     
     public function testBlockingLimit3With10Tasks()
@@ -83,12 +96,12 @@ class TaskMapTest extends TestCase
     
     public function testNonBlockingNoLimitWith10Tasks()
     {
-        $this->runMap(10, false);
+        $this->runMap(10, false, 0);
     }
     
     public function testNonBlockingNoLimitWith100Tasks()
     {
-        $this->runMap(100, false);
+        $this->runMap(100, false, 0);
     }
     
     public function testNonBlockingLimit3With10Tasks()
