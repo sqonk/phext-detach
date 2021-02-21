@@ -27,11 +27,11 @@ $ composer require sqonk/phext-detach
 
 
 
-### Updating from V1.0
+### Updating past V1.0
 
 Release 1.1 changes the value returned from both a Channel and a BufferedChannel when they are closed. Previously they would return `NULL`, now they return the constant `CHAN_CLOSED`. This was done in order to clearly differentiate between null values intentionally inserted into a channel and channel closure.
 
-Code written previously like this:
+Code written previously akin to the following:
 
 ```php
 while ($value = $chan->get()) { 
