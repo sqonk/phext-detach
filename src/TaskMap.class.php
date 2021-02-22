@@ -80,7 +80,7 @@ class TaskMap
      */
     public function limit(?int $limit): TaskMap
     {
-        $this->limit = $limit;
+        $this->limit = $limit ?? detach_nproc();
         return $this;
     }
     
