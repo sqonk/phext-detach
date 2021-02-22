@@ -38,6 +38,6 @@ A BufferedChannel is an queue of values that may be passed between tasks. Unlike
 
 [Global Methods](global_functions.md)
 
-A collection of general purpose utility methods and constants that import across the global namespace.
+Detach exports much of the Dispatcher interface to a series of global standalone functions, allowing a syntactic alternative to interfacing with the library.
 
 

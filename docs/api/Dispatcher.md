@@ -30,7 +30,7 @@ It is useful for environnments that need to run a block of code in parallel.
 ------
 ##### map
 ```php
-static public function map(iterable $data, callable $callback, array $params = null, bool $block = true, int $limit = 0) 
+static public function map(iterable $data, callable $callback, array $params = null, bool $block = true, int $limit = null) 
 ```
 Map an array of items to be processed each on a seperate task. The receiving callback function should take at least one parameter.
 
@@ -40,7 +40,7 @@ This method creates a new task map and immediately starts it.
 - **$callback** The callback method that will receive each item on the seperate task.
 - **$params** An optional array of additional [constant] parameters that will be passed to the callback.
 - **$block** Whether the main program will block execution until all tasks have completed.
-- **$limit** Set the maximum number of tasks that may run concurrently. 0 = unlimited.
+- **$limit** Set the maximum number of tasks that may run concurrently. 0 = unlimited. Defaults to the number of phsyical CPU cores on the running system.
 
 **Returns:**  array|BufferedChannel The result changes based on the configuration of the task map. 
 **See:**  TaskMap class for more options. 

@@ -43,9 +43,7 @@ A provide a series of auxiliary parameters that are provided to the callback in 
 ```php
 public function limit(int $limit) : sqonk\phext\detach\TaskMap
 ```
-Set the maximum number of tasks that may run concurrently. If the number is below 1 then no limit is applied and as many tasks as there are elements in the data array will be created spawned.
-
-The default is 0.
+Set the maximum number of tasks that may run concurrently. If the number is below 1 then no limit is applied and as many tasks as there are elements in the data array will be created spawned. NOTE that setting it to unlimited may have a detrimental affect on the performance of the code and the underlying system it is being run on.
 
 
 ------

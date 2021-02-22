@@ -94,7 +94,7 @@ function detach_kill(): void
 }
 
 /**
- * Return number of phsyical CPU cores present on the running system.
+ * Return the number of phsyical CPU cores present on the running system.
  */
 function detach_nproc(): int
 {
