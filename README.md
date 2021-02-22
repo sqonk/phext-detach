@@ -174,7 +174,7 @@ prints:
 
 #### Example 4 - Efficient use of resources
 
-By default a `TaskMap` will spawn as many tasks as there are items in the data array. If your dataset contains more than a small number of items, and the work being done on each item is relatively minimal, it is more efficient to limit the number of running tasks to a smaller number and have the TaskMap queue the distribution of the elements to each task for processing as they become free.
+By default a `TaskMap` will spawn as many tasks as there are items in the data array (starting with V1.1 this has changed). If your dataset contains more than a small number of items, and the work being done on each item is relatively minimal, it is more efficient to limit the number of running tasks to a smaller number and have the TaskMap queue the distribution of the elements to each task for processing as they become free.
 
 This example limits the number of tasks to 3 in *non-blocking* mode, which receives the results via a buffered channel.
 
