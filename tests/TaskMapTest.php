@@ -99,6 +99,11 @@ class TaskMapTest extends TestCase
         $this->runMap(10, false, 0);
     }
     
+    public function testNonBlockingDefaultLimitWith10Tasks()
+    {
+        $this->runMap(10, false, null);
+    }
+    
     public function testNonBlockingNoLimitWith100Tasks()
     {
         $this->runMap(100, false, 0);
