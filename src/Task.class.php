@@ -180,6 +180,7 @@ class Task
 			// child process entry point.
 			$this->isParent = false;	
             $this->pid = getmypid();
+            Dispatcher::_clear();
             
             self::$currentPID = $this->pid;		
 			
@@ -190,6 +191,7 @@ class Task
                 $key = $this->key(self::pCHILD);
                 if (apcu_exists($key))
                     apcu_delete($key); // remove any store data destined for the child.
+                detach_kill();
             });
             
             $r = $this->run(...$args); //println('send to parent');
