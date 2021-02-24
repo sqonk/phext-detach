@@ -176,6 +176,8 @@ prints:
 
 By default a `TaskMap` will spawn as many tasks as there are items in the data array (starting with V1.1 this has changed). If your dataset contains more than a small number of items, and the work being done on each item is relatively minimal, it is more efficient to limit the number of running tasks to a smaller number and have the TaskMap queue the distribution of the elements to each task for processing as they become free.
 
+In V1.1 onwards TaskMaps try to detect the number of CPU cores available and defaults the pool limit to that, leaving the programmer to voluntarily re-enable unlimited task spawning when they see the need.
+
 This example limits the number of tasks to 3 in *non-blocking* mode, which receives the results via a buffered channel.
 
 ```php
@@ -191,7 +193,7 @@ $map = new TaskMap($numbers, function($i) {
 // receive a BufferedChannel that will receive results as each task completes.
 $channel = $map->limit(3)->block(false)->start();
 
-while ($r = $channel->get())
+while (($r = $channel->get()) !== CHAN_CLOSED)
   println("{$r[0]}: square is {$r[1]}");
 /*
 prints: (order of results returned will vary with non-blocking)
@@ -226,7 +228,7 @@ $channel = dispatch::map(data:$numbers, limit:3, block:false, callback:function(
   return [$i, $i ** 2];
 });
 
-while ($r = $channel->get())
+while (($r = $channel->get()) !== CHAN_CLOSED)
   println("{$r[0]}: square is {$r[1]}");
 /*
 prints: (order of results returned will vary with non-blocking)
