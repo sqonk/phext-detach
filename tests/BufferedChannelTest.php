@@ -99,4 +99,22 @@ class BufferedChannelTest extends TestCase
         
         detach_kill();
     }
+    
+    public function testGenerator()
+    {
+        $func = function($values, $out) { 
+            foreach ($values as $v)
+                $out->put($v ** 2);
+            $out->close();
+        };
+        $in = [1,2,3,4];
+        $out = [1,4,9,16];
+        $chan = new BufferedChannel;
+        
+        detach ($func, [$in, $chan]);
+        
+        foreach ($chan->incoming() as $i => $v) {
+            $this->assertSame($out[$i], $v);
+        }
+    }
 }

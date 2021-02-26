@@ -47,6 +47,14 @@ while (($value = $chan->get()) !== CHAN_CLOSED) {
 }
 ```
 
+Alternatively you can now use a generator:
+
+```php
+foreach ($chan->incoming() as $value) {
+  // process value.
+}
+```
+
 
 
 ### Updating from V0.4
@@ -193,7 +201,7 @@ $map = new TaskMap($numbers, function($i) {
 // receive a BufferedChannel that will receive results as each task completes.
 $channel = $map->limit(3)->block(false)->start();
 
-while (($r = $channel->get()) !== CHAN_CLOSED)
+foreach ($channel->incoming() as $r)
   println("{$r[0]}: square is {$r[1]}");
 /*
 prints: (order of results returned will vary with non-blocking)
@@ -228,7 +236,7 @@ $channel = dispatch::map(data:$numbers, limit:3, block:false, callback:function(
   return [$i, $i ** 2];
 });
 
-while (($r = $channel->get()) !== CHAN_CLOSED)
+foreach ($channel->incoming() as $r)
   println("{$r[0]}: square is {$r[1]}");
 /*
 prints: (order of results returned will vary with non-blocking)

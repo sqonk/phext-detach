@@ -11,6 +11,7 @@ A channel is a block-in, and (by default) a block-out mechanism, meaning that th
 [put](#put)
 [get](#get)
 [next](#next)
+[incoming](#incoming)
 
 ------
 ##### __construct
@@ -62,6 +63,16 @@ $wait defaults to `TRUE`.
 public function next($wait = true) 
 ```
 Alias for Channel::get().
+
+
+------
+##### incoming
+```php
+public function incoming($wait = true) : Generator
+```
+Yield the channel out to an iterator loop until the point at which it is closed off. If you wish to put your task into an infinite scanning loop for the lifetime of the channel, for example to process all incoming data, then this can provide a more simplistic model for doing so.
+
+- **$wait** If $wait is given as an integer of 1 or more then it is used as a timeout in seconds. In such a case, if nothing is received before the timeout then a value of `NULL` will be returned if nothing is received prior to the expiry. Defaults to `TRUE`, which means each loop will block until such time as data is received.
 
 
 ------

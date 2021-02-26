@@ -179,4 +179,20 @@ class Channel
 	{
 		return $this->get($wait);
 	}
+    
+    /**
+     * Yield the channel out to an iterator loop until the point at which it is closed off. If you 
+     * wish to put your task into an infinite scanning loop for the lifetime of the channel, 
+     * for example to process all incoming data, then this can provide a more simplistic model for
+     * doing so.
+     * 
+     * -- parameters:
+     * @param $wait If $wait is given as an integer of 1 or more then it is used as a timeout in seconds. In such a case, if nothing is received before the timeout then a value of NULL will be returned if nothing is received prior to the expiry. Defaults to TRUE, which means each loop will block until such time as data is received.
+     */
+    public function incoming($wait = true): \Generator
+    {
+        while (($value = $this->get($wait)) !== CHAN_CLOSED) {
+            yield $value;
+        }
+    }
 }
