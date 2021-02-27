@@ -51,6 +51,36 @@ class BufferedChannelTest extends TestCase
         detach_kill();
     }
     
+    public function testWait()
+    {
+        $func = function($chan) {
+            sleep(1);
+            $chan->put(3);
+        };
+        $chan = new BufferedChannel;
+        
+        detach($func, [$chan]);
+        
+        $this->assertSame(3, $chan->get(2));
+        
+        detach_kill();
+    }
+    
+    public function testWaitTimeout()
+    {
+        $func = function($chan) {
+            sleep(2);
+            $chan->put(3);
+        };
+        $chan = new BufferedChannel;
+        
+        detach($func, [$chan]);
+        
+        $this->assertSame(null, $chan->get(1));
+        
+        detach_kill();
+    }
+    
     public function testClose()
     {
         $cannon = function($chan) {
