@@ -31,7 +31,7 @@ namespace sqonk\phext\detach;
  */
 use sqonk\phext\core\arrays;
 
-class BufferedChannel
+class BufferedChannel implements \IteratorAggregate
 {
     protected $open = true;
     
@@ -351,5 +351,14 @@ class BufferedChannel
         while (($value = $this->get($wait)) !== CHAN_CLOSED) {
             yield $value;
         }
+    }
+    
+    /**
+     * Use the channel object as an iterator for incoming values, looping until it is closed off. This method 
+     * has the same effect as calling BufferedChannel::incoming() with the default parameter of TRUE for the $wait parameter.
+     */
+    public function getIterator(): \Traversable
+    {
+        return $this->incoming();
     }
 }

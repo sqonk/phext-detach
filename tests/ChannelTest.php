@@ -193,8 +193,17 @@ class ChannelTest extends TestCase
         
         detach ($func, [$in, $chan]);
         
-        foreach ($chan->incoming() as $i => $v) {
+        // wait time of 1 is here merely to ensure custom wait times flow through.
+        foreach ($chan->incoming(1) as $i => $v) {
             $this->assertSame($out[$i], $v);
         }
+        
+        $chan = new Channel;
+        detach ($func, [$in, $chan]);
+        foreach ($chan as $i => $v) {
+            $this->assertSame($out[$i], $v);
+        }
+        
+        detach_kill();
     }
 }

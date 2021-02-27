@@ -29,7 +29,7 @@ $ composer require sqonk/phext-detach
 
 ### Updating past V1.0
 
-Release 1.1 changes the value returned from both a Channel and a BufferedChannel when they are closed. Previously they would return `NULL`, now they return the constant `CHAN_CLOSED`. This was done in order to clearly differentiate between null values intentionally inserted into a channel and channel closure.
+Release 1.1 *changes the value returned* from both a `Channel` and a `BufferedChannel` when they are closed. Previously they would return `NULL`, now they return the constant `CHAN_CLOSED`. This was done in order to clearly differentiate between null values intentionally inserted into a channel and channel closure.
 
 Code written previously akin to the following:
 
@@ -47,10 +47,16 @@ while (($value = $chan->get()) !== CHAN_CLOSED) {
 }
 ```
 
-Alternatively you can now use a generator:
+Alternatively, for the purposes of maintaining simpler syntax, you can now use a generator:
 
 ```php
+// function call..
 foreach ($chan->incoming() as $value) {
+  // process value.
+}
+
+// or directly passing the object as the iterator..
+foreach ($chan as $value) {
   // process value.
 }
 ```
@@ -77,6 +83,8 @@ Documentation
 ------------
 
 [API Reference](docs/api/index.md) now available.
+
+
 
 
 ## Examples

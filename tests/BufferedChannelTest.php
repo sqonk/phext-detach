@@ -143,8 +143,16 @@ class BufferedChannelTest extends TestCase
         
         detach ($func, [$in, $chan]);
         
-        foreach ($chan->incoming() as $i => $v) {
+        foreach ($chan->incoming(1) as $i => $v) {
             $this->assertSame($out[$i], $v);
         }
+        
+        $chan = new BufferedChannel;
+        detach ($func, [$in, $chan]);
+        foreach ($chan as $i => $v) {
+            $this->assertSame($out[$i], $v);
+        }
+        
+        detach_kill();
     }
 }

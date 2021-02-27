@@ -28,7 +28,7 @@ namespace sqonk\phext\detach;
  * that the task that sets a value will block until another task has received 
  * it.
  */
-class Channel
+class Channel implements \IteratorAggregate
 {    
     private const CHAN_SIG_CLOSE = "#__CHAN-CLOSE__#";
     private $open = true;
@@ -194,5 +194,14 @@ class Channel
         while (($value = $this->get($wait)) !== CHAN_CLOSED) {
             yield $value;
         }
+    }
+    
+    /**
+     * Use the channel object as an iterator for incoming values, looping until it is closed off. This method 
+     * has the same effect as calling Channel::incoming() with the default parameter of TRUE for the $wait parameter.
+     */
+    public function getIterator(): \Traversable
+    {
+        return $this->incoming();
     }
 }

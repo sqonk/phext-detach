@@ -17,6 +17,7 @@ BufferedChannels are an effective bottle-necking system where data obtained from
 [next](#next)
 [get_all](#get_all)
 [incoming](#incoming)
+[getIterator](#getiterator)
 
 ------
 ##### __construct
@@ -113,3 +114,12 @@ Yield the channel out to an iterator loop until the point at which it is closed 
 
 
 ------
+##### getIterator
+```php
+public function getIterator() : Traversable
+```
+Use the channel object as an iterator for incoming values, looping until it is closed off. This method has the same effect as calling BufferedChannel::incoming() with the default parameter of `TRUE` for the $wait parameter.
+
+
+------
+
