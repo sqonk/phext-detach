@@ -319,6 +319,12 @@ class BufferedChannel implements \IteratorAggregate
                         $values = apcu_fetch($this->key); 
                         $read = true; 
                         apcu_delete($this->key); 
+                        if (is_array($values) && arrays::last($values) == self::CHAN_SIG_CLOSE) {
+                            array_pop($values);
+                            $this->open = false;
+                            // re-insert close sig so other listeners can pick it up.
+                            apcu_store($this->key, [self::CHAN_SIG_CLOSE]);
+                        }
                     }
                 });
             }
@@ -326,12 +332,6 @@ class BufferedChannel implements \IteratorAggregate
                 $read = true;
             if (! $read)
                 usleep(TASK_WAIT_TIME); 
-        }
-        
-        if (is_array($values) && arrays::last($values) == self::CHAN_SIG_CLOSE)
-        {
-            array_pop($values);
-            $this->open = false;
         }
         
         return $values;

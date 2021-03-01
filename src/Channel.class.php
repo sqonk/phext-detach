@@ -20,13 +20,17 @@ namespace sqonk\phext\detach;
 */
 
 /**
- * Channel is a loose implentation of channels from the Go language. 
- * It provides a simple way of allowing independant processes to send 
- * and receive data between one another.
+ * A Channel is a loose implentation of channels from the Go language. It provides a simple way of allowing 
+ * independant processes to send and receive data between one another.
  * 
- * A channel is a block-in, and (by default) a block-out mechanism, meaning 
- * that the task that sets a value will block until another task has received 
- * it.
+ * A Channel is a block-in, and (by default) a block-out mechanism, meaning that the task that sets a value 
+ * will block until another task has received it.
+ * 
+ * Bare in mind, that unlike BufferedChannels, for most situations a Channel should be explicitly closed off
+ * when there is no more data to send, particularly when other tasks might be locked in a loop or waiting
+ * indefinitely for more values. BufferedChannels have the ability to signal their closure prior to script
+ * termination but a normal Channel does not, meaning that they have the potential to leave spawned subprocesses 
+ * hanging after the parent script has since terminated if they are never closed.
  */
 class Channel implements \IteratorAggregate
 {    
@@ -40,7 +44,6 @@ class Channel implements \IteratorAggregate
 	{
         $this->key = "CHANID-".uniqid();
 	}
-
 
     protected function _synchronised(callable $callback): void
     {
@@ -93,8 +96,10 @@ class Channel implements \IteratorAggregate
         
         
         // Wait for the value to be read by something else.
-        while (apcu_exists($this->key)) {
-            usleep(TASK_WAIT_TIME);    
+        if ($value != self::CHAN_SIG_CLOSE) {
+            while (apcu_exists($this->key)) {
+                usleep(TASK_WAIT_TIME);    
+            }
         }
 
         return $this;
@@ -152,7 +157,8 @@ class Channel implements \IteratorAggregate
                 $this->_synchronised(function() use (&$value, &$read) {
                     if (apcu_exists($this->key)) {
                         $value = apcu_fetch($this->key);
-                        apcu_delete($this->key);
+                        if ($value != self::CHAN_SIG_CLOSE)
+                            apcu_delete($this->key);
                         $read = true;
                     }
                 });

@@ -127,7 +127,7 @@ class ChannelTest extends TestCase
 
         // The prime sieve: Daisy-chain Filter processes.
         $ch = new Channel; // Create a new channel.
-        detach ($generate, [$ch]); // Launch Generate goroutine.
+        detach ($generate, [$ch]); // Launch Generate routine.
         foreach (range(0, 9) as $i) 
         {
             $prime = $ch->next();
