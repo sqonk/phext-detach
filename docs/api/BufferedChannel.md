@@ -8,6 +8,7 @@ The queue is unordered, meaning that values may be read in in a different order 
 BufferedChannels are an effective bottle-necking system where data obtained from multiple tasks may need to be fed into a singular thread for post-processing.
 #### Methods
 [__construct](#__construct)
+[__destruct](#__destruct)
 [capacity](#capacity)
 [close](#close)
 [set](#set)
@@ -25,6 +26,14 @@ BufferedChannels are an effective bottle-necking system where data obtained from
 public function __construct() 
 ```
 Construct a new BufferedChannel.
+
+
+------
+##### __destruct
+```php
+public function __destruct() 
+```
+No documentation available.
 
 
 ------
@@ -122,4 +131,3 @@ Use the channel object as an iterator for incoming values, looping until it is c
 
 
 ------
-

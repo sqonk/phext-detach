@@ -45,7 +45,15 @@ class BufferedChannel implements \IteratorAggregate
 		$this->key = 'BCHAN-'.uniqid();
         $this->wckey = "$this->key.wc";
         $this->capkey = "$this->key.cap";
+        $this->createdOnPID = detach_pid();
 	}
+    
+    public function __destruct()
+    {
+        if ($this->open and $this->createdOnPID == detach_pid()) {
+            $this->close(); // close off channel from task that created it.
+        }
+    }
     
     protected function _synchronised(callable $callback): void
     {
