@@ -344,10 +344,6 @@ Please see original concept of pnctl Threading by Tudor Barbu @ <a href="https:/
 
 
 
-## Performance
-
-If you are interested in how the library holds up compared to plain old single-threaded PHP (as well as comparisons with other languages) I have posted a [rudimentary CPU-work-based benchmark project](https://github.com/sqonk/exp-benchmark-tests) with some results.
-
 
 
 ## License
