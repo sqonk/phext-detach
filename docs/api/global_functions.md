@@ -8,6 +8,7 @@
 [detach_pid](#detach_pid)
 [detach_kill](#detach_kill)
 [detach_nproc](#detach_nproc)
+[channel_select](#channel_select)
 
 ------
 ##### detach
@@ -39,7 +40,7 @@ This method creates a new task map and immediately starts it.
 - **$callback** The callback method that will receive each item on the seperate task.
 - **$params** An optional array of additional [constant] parameters that will be passed to the callback.
 - **$block** Whether the main program will block execution until all tasks have completed.
-- **$limit** Set the maximum number of tasks that may run concurrently. 0 = unlimited. Defaults to the number of phsyical CPU cores on the running system.
+- **$limit** Set the maximum number of tasks that may run concurrently. 0 = unlimited. Defaults to the number of physical CPU cores on the running system.
 
 **Returns:**  array|BufferedChannel The result changes based on the configuration of the task map. 
 **See:**  TaskMap class for more options. 
@@ -79,7 +80,22 @@ Immediately stop all running tasks. This method is an alias for `Dispatcher::kil
 ```php
 function detach_nproc() : int
 ```
-Return the number of phsyical CPU cores present on the running system.
+Return the number of physical CPU cores present on the running system.
+
+
+------
+##### channel_select
+```php
+function channel_select(...$channels) : array
+```
+Takes a series of Channels or BufferedChannels and returns the value of the first one to receive a value.
+
+This method will block indefinitely until it receives a non-null value from one of the provided channels. It should be noted that any channel closure will also qualify as a valid return value.
+
+**Returns:**  an array containing the first value received and the respective channel to have received it.
+
+
+**Throws:**  InvalidArgumentException if any parameter given is not an object of type Channel or BufferedChannel.
 
 
 ------

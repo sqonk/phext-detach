@@ -125,7 +125,8 @@ function generateForClass($cl)
 
 function genGlobals()
 {
-    $methods = ['detach', 'detach_map', 'detach_wait', 'detach_pid', 'detach_kill', 'detach_nproc'];
+    $methods = ['detach', 'detach_map', 'detach_wait', 'detach_pid', 
+        'detach_kill', 'detach_nproc', 'channel_select'];
     $name = 'global_functions';
         
     $out = new SplFileObject(sprintf("%s/api/%s.md", __DIR__, $name), 'w+');

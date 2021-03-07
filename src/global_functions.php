@@ -17,6 +17,8 @@
 * permissions and limitations under the License.
 */
 
+use \sqonk\phext\detach\{Task,TaskMap,Channel,BufferedChannel,Dispatcher};
+
 define('CHAN_CLOSED', '__CHANCLOSED__');
 
 /**
@@ -34,9 +36,9 @@ define('CHAN_CLOSED', '__CHANCLOSED__');
  * 
  * @return The newly created and started task.
  */
-function detach(callable $callback, array $args = []): \sqonk\phext\detach\Task
+function detach(callable $callback, array $args = []): Task
 {
-    return \sqonk\phext\detach\Dispatcher::detach($callback, $args);
+    return Dispatcher::detach($callback, $args);
 }
 
 /**
@@ -50,7 +52,7 @@ function detach(callable $callback, array $args = []): \sqonk\phext\detach\Task
  * @param $callback The callback method that will receive each item on the seperate task.
  * @param $params An optional array of additional [constant] parameters that will be passed to the callback. 
  * @param $block Whether the main program will block execution until all tasks have completed.
- * @param $limit Set the maximum number of tasks that may run concurrently. 0 = unlimited. Defaults to the number of phsyical CPU cores on the running system.
+ * @param $limit Set the maximum number of tasks that may run concurrently. 0 = unlimited. Defaults to the number of physical CPU cores on the running system.
  *
  * @return array|BufferedChannel The result changes based on the configuration of the task map.
  * @see TaskMap class for more options.
@@ -58,7 +60,7 @@ function detach(callable $callback, array $args = []): \sqonk\phext\detach\Task
  */
 function detach_map(iterable $data, callable $callback, ?array $params = null, bool $block = true, ?int $limit = null)
 {
-    return \sqonk\phext\detach\Dispatcher::map($data, $callback, $params, $block, $limit);
+    return Dispatcher::map($data, $callback, $params, $block, $limit);
 }
 
 /**
@@ -73,7 +75,7 @@ function detach_map(iterable $data, callable $callback, ?array $params = null, b
  */
 function detach_wait($tasks = null)
 {
-    return \sqonk\phext\detach\Dispatcher::wait($tasks);
+    return Dispatcher::wait($tasks);
 }
 
 /**
@@ -82,7 +84,7 @@ function detach_wait($tasks = null)
  */
 function detach_pid()
 {
-    return \sqonk\phext\detach\Task::currentPID();
+    return Task::currentPID();
 }
 
 /**
@@ -90,11 +92,11 @@ function detach_pid()
  */
 function detach_kill(): void
 {
-    \sqonk\phext\detach\Dispatcher::kill();
+    Dispatcher::kill();
 }
 
 /**
- * Return the number of phsyical CPU cores present on the running system.
+ * Return the number of physical CPU cores present on the running system.
  */
 function detach_nproc(): int
 {
@@ -114,4 +116,30 @@ function detach_nproc(): int
     }
     
     return $nproc;
+}
+
+/**
+ * Takes a series of Channels or BufferedChannels and returns the value of the first one to receive a value.
+ * 
+ * This method will block indefinitely until it receives a non-null value from one of the provided channels. It
+ * should be noted that any channel closure will also qualify as a valid return value.
+ * 
+ * @return an array containing the first value received and the respective channel to have received it.
+ * 
+ * @throws InvalidArgumentException if any parameter given is not an object of type Channel or BufferedChannel.
+ */
+function channel_select(...$channels): array
+{
+    foreach ($channels as $ch) {
+        if (! $ch instanceof Channel && ! $ch instanceof BufferedChannel)
+            throw new \InvalidArgumentException('channel_select() only accepts objects of type Channel or BufferedChannel');
+    }
+    while (true) {
+        foreach ($channels as $ch) {
+            if (($value = $ch->get(false)) !== null) {
+                return [$value, $ch];
+            }
+        }
+        usleep(TASK_WAIT_TIME);
+    }
 }
