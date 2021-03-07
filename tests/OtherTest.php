@@ -51,6 +51,9 @@ class OtherTest extends TestCase
                 throw new Exception('unknown value');
         }
         
+        $this->expectException(InvalidArgumentException::class);
+        channel_select(2);
+        
         detach_kill();
     }
 }
