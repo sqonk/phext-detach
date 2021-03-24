@@ -9,7 +9,7 @@
         "ext-apcu": "*",
         "sqonk/phext-core": "^1"
     },
-	"keywords": ["pcntl","parallel","multitasking","multi-tasking","threading"],
+	"keywords": ["pcntl","parallel","multitasking","multi-tasking","concurrency", "concurrent"],
     "license": "MIT",
     "authors": [
         {
