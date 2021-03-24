@@ -49,7 +49,7 @@ class Channel implements \IteratorAggregate
     {
         $lock = "{$this->key}.lock";
         $pid = detach_pid();
-        while (apcu_fetch($lock) != $pid)
+        while (apcu_fetch($lock) != $pid && $this->open())
         { 
             if (! apcu_add($lock, $pid))
                 usleep(TASK_WAIT_TIME);
@@ -68,13 +68,7 @@ class Channel implements \IteratorAggregate
     public function open(): bool
     {
         if ($this->open && apcu_exists($this->key)) {
-            $this->_synchronised(function() {
-                if (apcu_exists($this->key)) {
-                    $value = apcu_fetch($this->key);
-                    $this->open = ($value != self::CHAN_SIG_CLOSE);
-                }
-            });
-            
+            $this->open = (apcu_fetch($this->key) != self::CHAN_SIG_CLOSE);
         }
         return $this->open;
     }
@@ -128,7 +122,7 @@ class Channel implements \IteratorAggregate
         
         // Wait for the value to be read by something else.
         if ($value != self::CHAN_SIG_CLOSE) {
-            while (apcu_exists($this->key)) {
+            while ($this->open() && apcu_exists($this->key)) {
                 usleep(TASK_WAIT_TIME);    
             }
         }
