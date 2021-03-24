@@ -8,6 +8,7 @@ A Channel is a block-in, and (by default) a block-out mechanism, meaning that th
 Bare in mind, that unlike BufferedChannels, for most situations a Channel should be explicitly closed off when there is no more data to send, particularly when other tasks might be locked in a loop or waiting indefinitely for more values. BufferedChannels have the ability to signal their closure prior to script termination but a normal Channel does not, meaning that they have the potential to leave spawned subprocesses hanging after the parent script has since terminated if they are never closed.
 #### Methods
 [__construct](#__construct)
+[open](#open)
 [close](#close)
 [set](#set)
 [put](#put)
@@ -25,6 +26,16 @@ Construct a new Channel.
 
 
 ------
+##### open
+```php
+public function open() : bool
+```
+Test to see if the channel is currently open.
+
+**Returns:**  `TRUE` if the channel is open, `FALSE` if not.
+
+
+------
 ##### close
 ```php
 public function close() : sqonk\phext\detach\Channel
@@ -38,6 +49,8 @@ Close off the channel, signalling to the receiver that no further values will be
 public function set($value) : sqonk\phext\detach\Channel
 ```
 Pass a value into the channel. This method will block until the channel is free to receive new data again.
+
+If the channel is closed then it will return immediately.
 
 
 ------
