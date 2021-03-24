@@ -241,22 +241,26 @@ In this simple example a seperate task emits 10 numbers over a single channel be
 ```php
 use sqonk\phext\detach\Channel;
 
-function test($out, $quit): void {
+function outputNumbers($out, $quit): void {
     foreach (range(1, 10) as $i)
         $out->put($i);
-    $quit->put(1);
+    $quit->put(true);
 }
 
 $numberChan = new Channel;
 $quit = new Channel;
 
-detach ('test', [$numberChan, $quit]);
+detach ('outputNumbers', [$numberChan, $quit]);
 
 while (true) {
-    [$val, $chan] = channel_select($numbers, $quit);
-    if ($chan == $quit)
+    [$value, $selected] = channel_select($numberChan, $quit);
+    
+    if ($selected == $quit and $value) {
+        println('received quit');
         break;
-    println($val);
+    }
+  
+    println($value);
 }
 ```
 
