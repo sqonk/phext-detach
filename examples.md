@@ -236,31 +236,38 @@ println($chan2->get());
 
 Waiting for incoming data on multiple channels can be achieved via the [channel_select](docs/api/global_functions.md#channel_select) method.
 
-In this simple example a seperate task emits 10 numbers over a single channel before issuing a signal over the "quit" channel, causing the parent task to exit its loop. 
+In this simple example 2 seperate tasks emit random numbers over a single channel until one of them hits 10. The first one to do so will close their channel and cause the parent task to exit its loop. 
 
 ```php
 use sqonk\phext\detach\Channel;
 
-function outputNumbers($out, $quit): void {
-    foreach (range(1, 10) as $i)
-        $out->put($i);
-    $quit->put(true);
+function cannon(string $name, Channel $out): void {
+   while (true) {
+      $num = rand(1, 10);
+      $out->put([$name, $num]);
+      usleep($num * 100);
+      if ($num == 10)
+          break;
+   }
+   $out->close();
 }
 
-$numberChan = new Channel;
-$quit = new Channel;
+$redChan = new Channel;
+$blueChan = new Channel;
 
-detach ('outputNumbers', [$numberChan, $quit]);
+detach ('cannon', ['red', $redChan]);
+detach ('cannon', ['blue', $blueChan]);
 
 while (true) {
-    [$value, $selected] = channel_select($numberChan, $quit);
-    
-    if ($selected == $quit and $value) {
-        println('received quit');
-        break;
-    }
-  
-    println($value);
+   [$value, $selected] = channel_select($redChan, $blueChan);
+
+   if ($value == CHAN_CLOSED) {
+       $name = $selected == $redChan ? 'red' : 'blue';
+       println($name, 'broke the loop');
+       break;
+   }
+
+   println(...$value);
 }
 ```
 
