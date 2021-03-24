@@ -69,46 +69,73 @@ class TaskMapTest extends TestCase
         $this->assertGreaterThan(0, $nproc);
     }
     
+    /**
+     * @medium
+     */
     public function testBlockingNoLimitWith10()
     {
         $this->runMap(10, true, 0);
     }
     
+    /**
+     * @medium
+     */
     public function testBlockingDefaultLimitWith10()
     {
         $this->runMap(10, true, null);
     }
     
+    /**
+     * @medium
+     */
     public function testBlockingNoLimitWith100()
     {
         $this->runMap(100, true, 0);
     }
     
+    /**
+     * @medium
+     */
     public function testBlockingLimit3With10Tasks()
     {
         $this->runMap(10, true, 3);
     }
     
+    /**
+     * @medium
+     */
     public function testBlockingLimit3With100Tasks()
     {
         $this->runMap(100, true, 3);
     }
     
+    /**
+     * @medium
+     */
     public function testNonBlockingNoLimitWith10Tasks()
     {
         $this->runMap(10, false, 0);
     }
     
+    /**
+     * @medium
+     */
     public function testNonBlockingDefaultLimitWith10Tasks()
     {
         $this->runMap(10, false, null);
     }
     
+    /**
+     * @medium
+     */
     public function testNonBlockingNoLimitWith100Tasks()
     {
         $this->runMap(100, false, 0);
     }
     
+    /**
+     * @medium
+     */
     public function testNonBlockingLimit3With10Tasks()
     {
         $this->runMap(10, false, 3);

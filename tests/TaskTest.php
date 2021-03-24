@@ -23,6 +23,9 @@ use sqonk\phext\detach\{Dispatcher,Task};
 
 class TaskTest extends TestCase
 {
+    /**
+     * @small
+     */
     public function testResult()
     {
         detach (function() {
@@ -34,6 +37,9 @@ class TaskTest extends TestCase
         detach_kill();
     }
     
+    /**
+     * @small
+     */
     public function testReturnType()
     {
         $t = detach(function() {
@@ -42,6 +48,9 @@ class TaskTest extends TestCase
         $this->assertSame(Task::class, get_class($t));
     }
     
+    /**
+     * @medium
+     */
     function testCompleteCheck() {
         $t = new Task(function() {
             sleep(1);
@@ -54,6 +63,9 @@ class TaskTest extends TestCase
         detach_kill();
     }
     
+    /**
+     * @medium
+     */
     protected function dispatch($amount)
     {
         $input = range(1, $amount);
@@ -75,16 +87,25 @@ class TaskTest extends TestCase
         detach_kill();
     }
     
+    /**
+     * @medium
+     */
     public function testDispatch10Tasks()
     {
         $this->dispatch(10);
     }
     
+    /**
+     * @medium
+     */
     public function testDispatch100Tasks()
     {
         $this->dispatch(100);
     }
     
+    /**
+     * @small
+     */
     public function testWaitAny()
     {
         detach (function() {
@@ -98,6 +119,9 @@ class TaskTest extends TestCase
         detach_kill(); // clear out the other result.
     }
     
+    /**
+     * @small
+     */
     public function testWaitSingle()
     {
         $t = detach(function() {
@@ -110,6 +134,9 @@ class TaskTest extends TestCase
         detach_kill();
     }
     
+    /**
+     * @small
+     */
     public function testWaitThree()
     {
         $input = range(1, 3);
@@ -131,6 +158,9 @@ class TaskTest extends TestCase
         detach_kill();
     }
     
+    /**
+     * @small
+     */
     public function testDetachWithArgsWhatWePutInIsWhatWeGetOut()
     {
         detach (function($a, $b) {

@@ -23,6 +23,9 @@ use sqonk\phext\detach\{BufferedChannel,Channel};
 
 class OtherTest extends TestCase
 {
+    /**
+     * @medium
+     */
     public function testChannelSelect()
     {
         $fun = function(array $channels) {

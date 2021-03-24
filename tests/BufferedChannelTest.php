@@ -23,6 +23,9 @@ use sqonk\phext\detach\{BufferedChannel,Dispatcher,TaskMap};
 
 class BufferedChannelTest extends TestCase
 {
+    /**
+     * @small
+     */
     public function testMappedPoolRollingValues()
     {
         $input = range(1, 100);
@@ -51,6 +54,9 @@ class BufferedChannelTest extends TestCase
         detach_kill();
     }
     
+    /**
+     * @medium
+     */
     public function testWait()
     {
         $func = function($chan) {
@@ -66,6 +72,9 @@ class BufferedChannelTest extends TestCase
         detach_kill();
     }
     
+    /**
+     * @medium
+     */
     public function testWaitTimeout()
     {
         $func = function($chan) {
@@ -81,6 +90,9 @@ class BufferedChannelTest extends TestCase
         detach_kill();
     }
     
+    /**
+     * @small
+     */
     public function testClose()
     {
         $cannon = function($chan) {
@@ -99,6 +111,9 @@ class BufferedChannelTest extends TestCase
         detach_kill();
     }
     
+    /**
+     * @small
+     */
     public function testBulkSet()
     {
         $inputs = [1,2,3];
@@ -112,6 +127,9 @@ class BufferedChannelTest extends TestCase
             $this->assertSame($r, array_shift($inputs));
     }
     
+    /**
+     * @small
+     */
     public function testGetAll()
     {
         $inputs = range(1,9);
@@ -130,6 +148,9 @@ class BufferedChannelTest extends TestCase
         detach_kill();
     }
     
+    /**
+     * @small
+     */
     public function testGenerator()
     {
         $func = function($values, $out) { 

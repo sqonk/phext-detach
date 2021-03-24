@@ -24,6 +24,9 @@ use sqonk\phext\detach\Channel;
 
 class ChannelTest extends TestCase
 {
+    /**
+     * @small
+     */
     public function testBasicTransit()
     {
         $gen = function($chan, $input)
@@ -46,6 +49,9 @@ class ChannelTest extends TestCase
         detach_kill();
     }
     
+    /**
+     * @medium
+     */
     public function testWait()
     {
         $func = function($chan) {
@@ -61,6 +67,9 @@ class ChannelTest extends TestCase
         detach_kill();
     }
     
+    /**
+     * @medium
+     */
     public function testWaitTimeout()
     {
         $func = function($chan) {
@@ -76,6 +85,9 @@ class ChannelTest extends TestCase
         detach_kill();
     }
     
+    /**
+     * @small
+     */
     public function testLogicGates()
     {
         $addOne = function($out, $i) {
@@ -100,7 +112,10 @@ class ChannelTest extends TestCase
 
         detach_kill(); // clean up and remove all subprocesses ready for next test.
     }
-
+    
+    /**
+     * @medium
+     */
     public function testChaining()
     {
         // Send the sequence 2, 3, 4, ... to channel 'ch'.
@@ -141,6 +156,9 @@ class ChannelTest extends TestCase
         detach_kill(); // clean up and remove all subprocesses ready for next test.
     }
     
+    /**
+     * @small
+     */
     public function testSum()
     {
         $sum = function($s, $out) { 
@@ -162,6 +180,9 @@ class ChannelTest extends TestCase
         detach_kill();
     }
     
+    /**
+     * @small
+     */
     public function testClose()
     {
         $cannon = function($chan) {
@@ -180,6 +201,9 @@ class ChannelTest extends TestCase
         detach_kill();
     }
     
+    /**
+     * @small
+     */
     public function testGenerator()
     {
         $func = function($values, $out) { 
