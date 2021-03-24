@@ -61,13 +61,42 @@ class Channel implements \IteratorAggregate
     }
     
     /**
+     * Test to see if the channel is currently open. 
+     * 
+     * @return TRUE if the channel is open, FALSE if not.
+     */
+    public function open(): bool
+    {
+        if ($this->open && apcu_exists($this->key)) {
+            $this->_synchronised(function() {
+                if (apcu_exists($this->key)) {
+                    $value = apcu_fetch($this->key);
+                    $this->open = ($value != self::CHAN_SIG_CLOSE);
+                }
+            });
+            
+        }
+        return $this->open;
+    }
+    
+    /**
      * Close off the channel, signalling to the receiver that no further values will be sent.
      */
     public function close(): Channel
     {
-        if ($this->open)
+        if ($this->open())
         {
-            $this->set(self::CHAN_SIG_CLOSE);
+            $written = false;
+            while (! $written)
+            {
+                $this->_synchronised(function() use (&$written) {
+                    if (apcu_add($this->key, self::CHAN_SIG_CLOSE))
+                        $written = true;
+                });
+                if (! $written)
+                    usleep(TASK_WAIT_TIME); 
+            }
+            
             $this->open = false;
         }    
         
@@ -77,10 +106,12 @@ class Channel implements \IteratorAggregate
     /**
      * Pass a value into the channel. This method will block until the
      * channel is free to receive new data again.
+     * 
+     * If the channel is closed then it will return immediately.
      */
     public function set($value): Channel
     {
-        if (! $this->open)
+        if (! $this->open())
             return $this;
         
         $written = false;
