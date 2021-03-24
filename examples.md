@@ -239,9 +239,9 @@ Waiting for incoming data on multiple channels can be achieved via the [channel_
 In this simple example 2 seperate tasks emit random numbers over a single channel until one of them hits 10. The first one to do so will close their channel and cause the parent task to exit its loop. 
 
 ```php
-use sqonk\phext\detach\Channel;
+use sqonk\phext\detach\BufferedChannel;
 
-function cannon(string $name, Channel $out): void {
+function cannon(string $name, BufferedChannel $out): void {
    while (true) {
       $num = rand(1, 10);
       $out->put([$name, $num]);
@@ -252,8 +252,8 @@ function cannon(string $name, Channel $out): void {
    $out->close();
 }
 
-$redChan = new Channel;
-$blueChan = new Channel;
+$redChan = new BufferedChannel;
+$blueChan = new BufferedChannel;
 
 detach ('cannon', ['red', $redChan]);
 detach ('cannon', ['blue', $blueChan]);
