@@ -76,7 +76,7 @@ class Dispatcher
     {
         $map = new TaskMap($data, $callback);
         if ($params)
-            $map->params($params);
+            $map->params(...$params);
         $map->block($block);
         if ($limit !== null)
             $map->limit($limit);
