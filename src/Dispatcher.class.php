@@ -66,7 +66,7 @@ class Dispatcher
      * @param $callback The callback method that will receive each item on the seperate task.
      * @param $params An optional array of additional [constant] parameters that will be passed to the callback. 
      * @param $block Whether the main program will block execution until all tasks have completed.
-     * @param $limit Set the maximum number of tasks that may run concurrently. 0 = unlimited. Defaults to the number of phsyical CPU cores on the running system.
+     * @param $limit Set the maximum number of tasks that may run concurrently. 0 = unlimited. Defaults to the number of physical CPU cores on the running system.
      *
      * @return array|BufferedChannel The result changes based on the configuration of the task map.
      * @see TaskMap class for more options.
