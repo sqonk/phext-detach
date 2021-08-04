@@ -71,7 +71,7 @@ class BufferedChannel implements \IteratorAggregate
     }
 	
     /**
-     * Set an arbitrary limit on the number of times data will be ready
+     * Set an arbitrary limit on the number of times data will be read
      * from the channel. Once the limit has been reached the channel
      * will be closed.
      * 
@@ -290,7 +290,7 @@ class BufferedChannel implements \IteratorAggregate
      * 
      * If $wait is given as an integer of 1 or more then it is used as a timeout
      * in seconds. In such a case, if nothing is received before the timeout then
-     * a value of NULL will be returned if nothing is received prior to the expiry.
+     * a value of NULL will be returned.
      * 
      * $wait defaults to TRUE.
      */

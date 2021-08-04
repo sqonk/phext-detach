@@ -20,8 +20,8 @@ namespace sqonk\phext\detach;
 */
 
 /**
- * A Channel is a loose implentation of channels from the Go language. It provides a simple way of allowing 
- * independant processes to send and receive data between one another.
+ * A Channel is a loose implementation of channels from the Go language. It provides a simple way of allowing 
+ * independent processes to send and receive data between one another.
  * 
  * A Channel is a block-in, and (by default) a block-out mechanism, meaning that the task that sets a value 
  * will block until another task has received it.
@@ -166,7 +166,7 @@ class Channel implements \IteratorAggregate
         
         /*
             - Wait until data is present.
-            - Aquire lock.
+            - Acquire lock.
             - Read data, as long as someone else has not snuck in a got it since we got the lock.
             - Delete value
             - Release lock
