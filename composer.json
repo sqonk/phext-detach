@@ -3,11 +3,11 @@
     "description": "Detach is a library for running tasks inside of a PHP script in parallel using forked processes.",
     "type": "library",
     "require": {
-		"php": "^7.3 || ^7.4 || ^8.0.0",
+		"php": "^8",
 		"ext-pcntl": "*",
         "ext-posix": "*",
         "ext-apcu": "*",
-        "sqonk/phext-core": "^1"
+        "sqonk/phext-core": "^1.1"
     },
 	"keywords": ["pcntl","parallel","multitasking","multi-tasking","concurrency", "concurrent"],
     "license": "MIT",

@@ -1,7 +1,7 @@
 # PHEXT Detach
 
-[![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%207.3-8892BF.svg)](https://php.net/)
-[![License](https://sqonk.com/opensource/license.svg)](license.txt)[![Build Status](https://travis-ci.org/sqonk/phext-detach.svg?branch=master)](https://travis-ci.org/sqonk/phext-detach)
+[![Minimum PHP Version](https://img.shields.io/badge/PHP-%3E%3D%208-yellow)](https://php.net/)
+[![License](https://sqonk.com/opensource/license.svg)](license.txt)[![Build Status](https://app.travis-ci.com/sqonk/phext-detach.svg?branch=master)](https://app.travis-ci.com/sqonk/phext-detach)
 
 Detach is a library for running tasks inside of a PHP script in parallel using forked processes. It clones a seperate process (based on the parent) and executes the requested callback. 
 
