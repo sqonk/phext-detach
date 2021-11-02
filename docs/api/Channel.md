@@ -1,7 +1,7 @@
 ###### PHEXT > [Detach](../README.md) > [API Reference](index.md) > Channel
 ------
 ### Channel
-A Channel is a loose implentation of channels from the Go language. It provides a simple way of allowing independant processes to send and receive data between one another.
+A Channel is a loose implementation of channels from the Go language. It provides a simple way of allowing independent processes to send and receive data between one another.
 
 A Channel is a block-in, and (by default) a block-out mechanism, meaning that the task that sets a value will block until another task has received it.
 

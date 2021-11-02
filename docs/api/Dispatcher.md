@@ -40,7 +40,7 @@ This method creates a new task map and immediately starts it.
 - **$callback** The callback method that will receive each item on the seperate task.
 - **$params** An optional array of additional [constant] parameters that will be passed to the callback.
 - **$block** Whether the main program will block execution until all tasks have completed.
-- **$limit** Set the maximum number of tasks that may run concurrently. 0 = unlimited. Defaults to the number of phsyical CPU cores on the running system.
+- **$limit** Set the maximum number of tasks that may run concurrently. 0 = unlimited. Defaults to the number of physical CPU cores on the running system.
 
 **Returns:**  array|BufferedChannel The result changes based on the configuration of the task map. 
 **See:**  TaskMap class for more options. 

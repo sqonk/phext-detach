@@ -41,7 +41,7 @@ No documentation available.
 ```php
 public function capacity(int $totalDeposits) : sqonk\phext\detach\BufferedChannel
 ```
-Set an arbitrary limit on the number of times data will be ready from the channel. Once the limit has been reached the channel will be closed.
+Set an arbitrary limit on the number of times data will be read from the channel. Once the limit has been reached the channel will be closed.
 
 Every time this method is called it will reset the write count to 0.
 
@@ -107,7 +107,7 @@ public function get_all($wait = true)
 ```
 Obtain all values currently residing on the queue (if any). If $wait is `TRUE` then this method will block until a new value is received. Be aware that in this mode the method will block forever if no further values are queued from other tasks.
 
-If $wait is given as an integer of 1 or more then it is used as a timeout in seconds. In such a case, if nothing is received before the timeout then a value of `NULL` will be returned if nothing is received prior to the expiry.
+If $wait is given as an integer of 1 or more then it is used as a timeout in seconds. In such a case, if nothing is received before the timeout then a value of `NULL` will be returned.
 
 $wait defaults to `TRUE`.
 
