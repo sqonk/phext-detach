@@ -5,18 +5,18 @@ This class is a modernised and rewritten version of the Thread class originally 
 
 You will not need to access this class directly unless you wish to extend the class and manage the execution yourself. Instance creation is exposed through the Dispatcher and the public methods `detach()` and `detach_wait()`.
 #### Methods
-[rootPID](#rootpid)
-[currentPID](#currentpid)
-[__construct](#__construct)
-[setRunnable](#setrunnable)
-[runnable](#runnable)
-[pid](#pid)
-[isAlive](#isalive)
-[complete](#complete)
-[result](#result)
-[unread](#unread)
-[start](#start)
-[stop](#stop)
+- [rootPID](#rootpid)
+- [currentPID](#currentpid)
+- [__construct](#__construct)
+- [setRunnable](#setrunnable)
+- [runnable](#runnable)
+- [pid](#pid)
+- [isAlive](#isalive)
+- [complete](#complete)
+- [result](#result)
+- [unread](#unread)
+- [start](#start)
+- [stop](#stop)
 
 ------
 ##### rootPID

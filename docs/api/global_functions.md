@@ -2,13 +2,13 @@
 ------
 ### global_functions
 #### Methods
-[detach](#detach)
-[detach_map](#detach_map)
-[detach_wait](#detach_wait)
-[detach_pid](#detach_pid)
-[detach_kill](#detach_kill)
-[detach_nproc](#detach_nproc)
-[channel_select](#channel_select)
+- [detach](#detach)
+- [detach_map](#detach_map)
+- [detach_wait](#detach_wait)
+- [detach_pid](#detach_pid)
+- [detach_kill](#detach_kill)
+- [detach_nproc](#detach_nproc)
+- [channel_select](#channel_select)
 
 ------
 ##### detach

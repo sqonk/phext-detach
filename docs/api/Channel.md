@@ -7,15 +7,15 @@ A Channel is a block-in, and (by default) a block-out mechanism, meaning that th
 
 Bare in mind, that unlike BufferedChannels, for most situations a Channel should be explicitly closed off when there is no more data to send, particularly when other tasks might be locked in a loop or waiting indefinitely for more values. BufferedChannels have the ability to signal their closure prior to script termination but a normal Channel does not, meaning that they have the potential to leave spawned subprocesses hanging after the parent script has since terminated if they are never closed.
 #### Methods
-[__construct](#__construct)
-[open](#open)
-[close](#close)
-[set](#set)
-[put](#put)
-[get](#get)
-[next](#next)
-[incoming](#incoming)
-[getIterator](#getiterator)
+- [__construct](#__construct)
+- [open](#open)
+- [close](#close)
+- [set](#set)
+- [put](#put)
+- [get](#get)
+- [next](#next)
+- [incoming](#incoming)
+- [getIterator](#getiterator)
 
 ------
 ##### __construct

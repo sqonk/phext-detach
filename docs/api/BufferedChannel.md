@@ -7,18 +7,18 @@ The queue is unordered, meaning that values may be read in in a different order 
 
 BufferedChannels are an effective bottle-necking system where data obtained from multiple tasks may need to be fed into a singular thread for post-processing.
 #### Methods
-[__construct](#__construct)
-[__destruct](#__destruct)
-[capacity](#capacity)
-[close](#close)
-[set](#set)
-[put](#put)
-[bulk_set](#bulk_set)
-[get](#get)
-[next](#next)
-[get_all](#get_all)
-[incoming](#incoming)
-[getIterator](#getiterator)
+- [__construct](#__construct)
+- [__destruct](#__destruct)
+- [capacity](#capacity)
+- [close](#close)
+- [set](#set)
+- [put](#put)
+- [bulk_set](#bulk_set)
+- [get](#get)
+- [next](#next)
+- [get_all](#get_all)
+- [incoming](#incoming)
+- [getIterator](#getiterator)
 
 ------
 ##### __construct

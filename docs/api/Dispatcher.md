@@ -3,12 +3,12 @@
 ### Dispatcher
 The Dispatch class acts as a static interface to the various classes of the detach library.
 #### Methods
-[detach](#detach)
-[map](#map)
-[_clear](#_clear)
-[wait](#wait)
-[wait_any](#wait_any)
-[kill](#kill)
+- [detach](#detach)
+- [map](#map)
+- [_clear](#_clear)
+- [wait](#wait)
+- [wait_any](#wait_any)
+- [kill](#kill)
 
 ------
 ##### detach

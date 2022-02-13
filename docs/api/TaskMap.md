@@ -3,11 +3,11 @@
 ### TaskMap
 The TaskMap class maps an array of elements each unto their own seperate task.
 #### Methods
-[__construct](#__construct)
-[block](#block)
-[params](#params)
-[limit](#limit)
-[start](#start)
+- [__construct](#__construct)
+- [block](#block)
+- [params](#params)
+- [limit](#limit)
+- [start](#start)
 
 ------
 ##### __construct
