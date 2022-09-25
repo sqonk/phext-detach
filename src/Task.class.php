@@ -36,6 +36,7 @@ class Task
     protected $pid; // holds the child process id.
     protected $isParent = true; // Used internally to determine which address space we are currently in.
 	protected $started = false; // has the task actually begun.
+    protected string $uuid;
     
     protected const pCHILD = 'child';
     protected const pPARENT = 'parent';

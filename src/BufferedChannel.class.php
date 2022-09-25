@@ -33,7 +33,11 @@ use sqonk\phext\core\arrays;
 
 class BufferedChannel implements \IteratorAggregate
 {
-    protected $open = true;
+    protected bool $open = true;
+    protected string $key;
+    protected string $wckey;
+    protected string $capkey;
+    protected string $createdOnPID;
     
     private const CHAN_SIG_CLOSE = "#__CHAN-CLOSE__#";
     				

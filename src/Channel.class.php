@@ -35,7 +35,8 @@ namespace sqonk\phext\detach;
 class Channel implements \IteratorAggregate
 {    
     private const CHAN_SIG_CLOSE = "#__CHAN-CLOSE__#";
-    private $open = true;
+    private bool $open = true;
+    protected string $key;
     
     /**
      * Construct a new Channel.
