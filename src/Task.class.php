@@ -33,20 +33,20 @@ define('TASK_WAIT_TIME', 500);
 class Task 
 {
     protected $callback; // callback method run from the seperate process.
-    protected $pid; // holds the child process id.
-    protected $isParent = true; // Used internally to determine which address space we are currently in.
-	protected $started = false; // has the task actually begun.
+    protected string $pid = ''; // holds the child process id.
+    protected bool $isParent = true; // Used internally to determine which address space we are currently in.
+	protected bool $started = false; // has the task actually begun.
     protected string $uuid;
     
     protected const pCHILD = 'child';
     protected const pPARENT = 'parent';
     
-    static protected $currentPID = '_parent_';
-    static protected $rootPID;
+    static protected string $currentPID = '_parent_';
+    static protected string $rootPID = '';
     
-    static private $envPassed = false;
+    static private bool $envPassed = false;
     
-    static private function _checkRequirements()
+    static private function _checkRequirements(): void
     {
         if (! function_exists('pcntl_fork'))
             throw new \RuntimeException("Detach requires the PCNTL extension to be installed and active.");
@@ -58,15 +58,14 @@ class Task
         self::$envPassed = true;
     }
     
-    static public function rootPID()
+    static public function rootPID(): string
     {
         if (! self::$rootPID)
             self::$rootPID = getmypid();
         return self::$rootPID;
     }
     
-    static public function currentPID()
-    {
+    static public function currentPID(): string {
         return self::$currentPID;
     }
 	
@@ -76,7 +75,7 @@ class Task
      * This merely creates the object. To schedule it for execution
      * you must call `start()` on it.
      */    
-    public function __construct($callback = null) 
+    public function __construct(?callable $callback = null) 
 	{
     	if ($callback !== null)
         	$this->setRunnable($callback);
@@ -92,8 +91,7 @@ class Task
                 apcu_delete($key);
     }
 
-    protected function key($suffix): string
-    {
+    protected function key(string $suffix): string {
         return "TASKID-{$this->pid}-{$this->uuid}_$suffix";
     }
 	
@@ -109,48 +107,42 @@ class Task
 	 * Get the current callback method. This may either be a callable 
 	 * or a string depending upon what you have previously set.
 	 */
-	public function runnable(): callable
-	{
+	public function runnable(): callable {
 		return $this->callback;
 	}
     
     /**
      * Returns the process id (pid) of the child process.
      */
-    public function pid(): string
-	{
+    public function pid(): string {
         return $this->pid;
     }
     
     /**
      * Checks if the child process is alive.
      */
-    public function isAlive(): bool
-	{
+    public function isAlive(): bool {
         return pcntl_waitpid($this->pid, $status, WNOHANG) === 0;
     }
 	
 	/**
 	 * A task has completed when it was started but is no longer alive.
 	 */
-	public function complete(): bool
-	{
+	public function complete(): bool {
 		return $this->started and ! $this->isAlive();
 	}
 	
 	/**
 	 * Obtains the result from the child process.  
 	 */  
-	public function result()
-	{
+	public function result(): mixed {
 		return $this->readFromChild();
 	}
 	
 	/**
 	 * Do we have result data waiting in the pipe that has not been read in by the parent?
 	 */
-	public function unread()
-	{
+	public function unread(): bool {
 		return apcu_exists($this->key(self::pPARENT));
 	}
 
@@ -202,7 +194,7 @@ class Task
         }
     }
     
-    protected function _synchronised($suffix, $callback): void
+    protected function _synchronised(string $suffix, callable $callback): void
     {
         $lock = $this->key($suffix).".lock";
         $pid = self::$currentPID; 
@@ -218,7 +210,7 @@ class Task
     }
 	
 	// Send data to the desired process (parent or child).
-	protected function write($suffix, $data): void
+	protected function write(string $suffix, mixed $data): void
 	{
         $written = false;
         $key = $this->key($suffix);
@@ -234,7 +226,7 @@ class Task
 	}
 	
 	// Called from child.
-	protected function sendToParent($data): void
+	protected function sendToParent(mixed $data): void
 	{
 		$this->write(self::pPARENT, $data);
 	}
@@ -247,7 +239,7 @@ class Task
 	}
 
 	// Read data from the desired process (parent or child).
-	protected function read($suffix)
+	protected function read(string $suffix): mixed
 	{
 		$key = $this->key($suffix);
         $value = '';
@@ -279,19 +271,17 @@ class Task
 	}
 	
 	// called from parent.
-	protected function readFromChild()
-	{
+	protected function readFromChild(): mixed {
 		return $this->read(self::pPARENT);
 	}
 	
 	// called from child.
-	protected function readFromParent()
-	{
+	protected function readFromParent(): mixed {
 		return $this->read(self::pCHILD);
 	}
 	 
 	// Main entry point of the child process.
-	protected function run(...$arguments)
+	protected function run(mixed ...$arguments): mixed
 	{
         $resp = null;
         try {
@@ -321,7 +311,7 @@ class Task
      * @param $signal - SIGKILL/SIGTERM
      * @param $wait - whether or not to block while the process exits.
      */
-    public function stop($signal = SIGKILL, $wait = false) 
+    public function stop(int $signal = SIGKILL, bool $wait = false): void
 	{
         if ($this->isAlive()) 
 		{
@@ -332,7 +322,7 @@ class Task
         }
     }
     
-    protected function signalHandler($signal) 
+    protected function signalHandler(int $signal): void 
 	{
         // currently does nothing.
     }

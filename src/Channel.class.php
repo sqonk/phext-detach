@@ -104,7 +104,7 @@ class Channel implements \IteratorAggregate
      * 
      * If the channel is closed then it will return immediately.
      */
-    public function set($value): Channel
+    public function set(mixed $value): Channel
     {
         if (! $this->open())
             return $this;
@@ -134,7 +134,7 @@ class Channel implements \IteratorAggregate
 	/**
 	 * Alias for Channel::set().
 	 */
-	public function put($value): Channel
+	public function put(mixed $value): static
 	{
 		$this->set($value);
 		return $this;
@@ -152,7 +152,7 @@ class Channel implements \IteratorAggregate
      * 
      * $wait defaults to TRUE.
      */
-    public function get($wait = true) 
+    public function get(bool|int $wait = true): mixed
     {
         if (! $this->open)
             return CHAN_CLOSED;
@@ -207,8 +207,7 @@ class Channel implements \IteratorAggregate
 	/**
 	 * Alias for Channel::get().
 	 */
-	public function next($wait = true)
-	{
+	public function next(bool|int $wait = true): mixed {
 		return $this->get($wait);
 	}
     
@@ -221,7 +220,7 @@ class Channel implements \IteratorAggregate
      * -- parameters:
      * @param $wait If $wait is given as an integer of 1 or more then it is used as a timeout in seconds. In such a case, if nothing is received before the timeout then a value of NULL will be returned if nothing is received prior to the expiry. Defaults to TRUE, which means each loop will block until such time as data is received.
      */
-    public function incoming($wait = true): \Generator
+    public function incoming(bool|int $wait = true): \Generator
     {
         while (($value = $this->get($wait)) !== CHAN_CLOSED) {
             yield $value;
@@ -232,8 +231,7 @@ class Channel implements \IteratorAggregate
      * Use the channel object as an iterator for incoming values, looping until it is closed off. This method 
      * has the same effect as calling Channel::incoming() with the default parameter of TRUE for the $wait parameter.
      */
-    public function getIterator(): \Traversable
-    {
+    public function getIterator(): \Traversable {
         return $this->incoming();
     }
 }
