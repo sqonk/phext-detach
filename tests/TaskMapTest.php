@@ -42,13 +42,12 @@ class TaskMapTest extends TestCase
                     $results[] = $r;
             }
             else {
-                $results = $map->start(); // returned value is array of tasks
-                if (! $block)
-                    $results = detach_wait();
+                $tasks = $map->start(); // returned value is array of tasks
+                $results = detach_wait($tasks);
             }
         }
             
-        $this->assertSame(count($range), count($results));
+        $this->assertSame(expected:count($range), actual:count($results));
         foreach ($results as $r) 
         {
             $this->assertContains($r, $range);
