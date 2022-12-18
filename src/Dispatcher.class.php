@@ -27,8 +27,11 @@ use sqonk\phext\core\arrays;
  */
 class Dispatcher
 {
-    static private $threads = [];
-    static private $shutdownSet = false;
+    /** 
+     * @var list<Task> 
+     */
+    static private array $threads = [];
+    static private bool $shutdownSet = false;
         
     /**
      * Execute the provided callback on a seperate process.
@@ -72,7 +75,7 @@ class Dispatcher
      * @see TaskMap class for more options.
      * @see TaskMap::start() for information on what is returned.
      */
-    static public function map(iterable $data, callable $callback, ?array $params = null, bool $block = true, ?int $limit = null)
+    static public function map(iterable $data, callable $callback, ?array $params = null, bool $block = true, ?int $limit = null): array|BufferedChannel
     {
         $map = new TaskMap($data, $callback);
         if ($params)
@@ -111,7 +114,7 @@ class Dispatcher
      * 
      * @return The result of the task or an array of results depending on how many tasks are being waited on.
      */
-    static public function wait($tasks = null)
+    static public function wait(Task|array|null $tasks = null): mixed
     {
 		if (! $tasks) {
 		    self::cleanup();
@@ -119,7 +122,7 @@ class Dispatcher
 		}
         
         if (is_array($tasks) && count($tasks) == 0)
-            return;
+            return null;
         
         if (is_array($tasks) && count($tasks) == 1)
             $tasks = $tasks[0];
@@ -156,7 +159,7 @@ class Dispatcher
      * 
      * Returns the result of the first task in the array to finish.
      */
-	static public function wait_any(?array $tasks = null)
+	static public function wait_any(?array $tasks = null): mixed
 	{
 		if (! $tasks) {
 		    self::cleanup();
@@ -164,7 +167,7 @@ class Dispatcher
 		}
 		
 		if (count($tasks) == 0)
-			return;
+			return null;
 		
         while (true)
         {

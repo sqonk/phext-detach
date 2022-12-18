@@ -48,17 +48,17 @@ function detach(callable $callback, array $args = []): Task
  * This method creates a new task map and immediately starts it.
  * 
  * -- parameters:
- * @param $data The array of items to be spread over seperate tasks.
- * @param $callback The callback method that will receive each item on the seperate task.
- * @param $params An optional array of additional [constant] parameters that will be passed to the callback. 
- * @param $block Whether the main program will block execution until all tasks have completed.
- * @param $limit Set the maximum number of tasks that may run concurrently. 0 = unlimited. Defaults to the number of physical CPU cores on the running system.
+ * @param iterable<mixed> $data The array of items to be spread over seperate tasks.
+ * @param callable $callback The callback method that will receive each item on the seperate task.
+ * @param ?array<mixed> $params An optional array of additional [constant] parameters that will be passed to the callback. 
+ * @param bool $block Whether the main program will block execution until all tasks have completed.
+ * @param int $limit Set the maximum number of tasks that may run concurrently. 0 = unlimited. Defaults to the number of physical CPU cores on the running system.
  *
- * @return array|BufferedChannel The result changes based on the configuration of the task map.
+ * @return list<mixed>|BufferedChannel The result changes based on the configuration of the task map.
  * @see TaskMap class for more options.
  * @see TaskMap::start() for information on what is returned.
  */
-function detach_map(iterable $data, callable $callback, ?array $params = null, bool $block = true, ?int $limit = null)
+function detach_map(iterable $data, callable $callback, ?array $params = null, bool $block = true, ?int $limit = null): array|BufferedChannel
 {
     return Dispatcher::map($data, $callback, $params, $block, $limit);
 }
@@ -70,20 +70,22 @@ function detach_map(iterable $data, callable $callback, ?array $params = null, b
  * nothing is passed in then it will wait for all currently
  * running tasks to finish.
  * 
- * Returns the result of the task or an array of results depending
- * on how many tasks are being waited on.
+ * --parameters:
+ * @param Task|list<Task>|null $tasks A set of tasks to wait for completion. If NULL then wait for every running task.
+ * 
+ * @return mixed The result of the task or an array of results depending on how many tasks are being waited on.
  */
-function detach_wait($tasks = null)
-{
+function detach_wait(Task|array|null $tasks = null): mixed {
     return Dispatcher::wait($tasks);
 }
 
 /**
  * Returns the PID of the current process the caller is on. This is
  * set to NULL for the parent process.
+ * 
+ * @return string The ID of the current process.
  */
-function detach_pid()
-{
+function detach_pid(): string {
     return Task::currentPID();
 }
 

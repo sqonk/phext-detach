@@ -27,11 +27,23 @@ use sqonk\phext\core\arrays;
  */
 class TaskMap
 {
-    protected $limit;
-    protected $params;
-    protected $block = true;
+    protected int $limit;
     
-    protected $data;
+    /** 
+     * @var ?list<mixed> $params; 
+     */
+    protected ?array $params = null;
+    
+    protected bool $block = true;
+    
+    /** 
+     * @var array<mixed> 
+     */
+    protected array $data;
+    
+    /** 
+     * @var callable $callback 
+     */
     protected $callback;
     
     /**
@@ -56,17 +68,19 @@ class TaskMap
      * 
      * The default is TRUE.
      */
-    public function block(bool $waitForCompletion): TaskMap
+    public function block(bool $waitForCompletion): self
     {
         $this->block = $waitForCompletion;
         return $this;
     }
     
     /**
-     * A provide a series of auxiliary parameters that are provided to the callback
+     * Provide a series of auxiliary parameters that are provided to the callback
      * in addition to the main element passed in.
+     * 
+     * @param list<mixed> ...$args
      */
-    public function params(...$args): TaskMap
+    public function params(mixed ...$args): self
     {
         $this->params = $args;
         return $this;
@@ -78,13 +92,13 @@ class TaskMap
      * will be created spawned. NOTE that setting it to unlimited may have a detrimental affect
      * on the performance of the code and the underlying system it is being run on. 
      */
-    public function limit(?int $limit): TaskMap
+    public function limit(int $limit): self
     {
-        $this->limit = $limit ?? detach_nproc();
+        $this->limit = ($limit > 1) ? $limit : detach_nproc();
         return $this;
     }
     
-    protected function _runPool()
+    protected function _runPool(): mixed
     {
         // migrate the data to process over to a buffered channel that will feed the tasks.
         $chan = new BufferedChannel;
@@ -130,8 +144,10 @@ class TaskMap
      * - When no pool limit and in non-blocking mode:* An array of spawned tasks.
      * - When a pool limit is set and in blocking mode:* An array of all data returned from each task.
      * - When a pool limit is set and in non-blocking mode:* A BufferedChannel that will receive the data returned from each task. The channel will automatically close when all items given to the map have been processed.
+     * 
+     * @return list<mixed>|BufferedChannel 
      */
-    public function start()
+    public function start(): array|BufferedChannel
     {
         if ($this->limit > 0)
         {

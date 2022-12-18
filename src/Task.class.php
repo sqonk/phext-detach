@@ -233,7 +233,7 @@ class Task
 	
 	
 	// Called from parent.
-	protected function sendToChild($data): void
+	protected function sendToChild(mixed $data): void
 	{
 		$this->write(self::pCHILD, $data);
 	}

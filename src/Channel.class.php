@@ -77,7 +77,7 @@ class Channel implements \IteratorAggregate
     /**
      * Close off the channel, signalling to the receiver that no further values will be sent.
      */
-    public function close(): Channel
+    public function close(): self
     {
         if ($this->open())
         {
@@ -104,7 +104,7 @@ class Channel implements \IteratorAggregate
      * 
      * If the channel is closed then it will return immediately.
      */
-    public function set(mixed $value): Channel
+    public function set(mixed $value): self
     {
         if (! $this->open())
             return $this;
@@ -134,7 +134,7 @@ class Channel implements \IteratorAggregate
 	/**
 	 * Alias for Channel::set().
 	 */
-	public function put(mixed $value): static
+	public function put(mixed $value): self
 	{
 		$this->set($value);
 		return $this;

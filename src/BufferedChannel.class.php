@@ -122,7 +122,7 @@ class BufferedChannel implements \IteratorAggregate
     /**
      * Close off the channel, signalling to the receiver that no further values will be sent.
      */
-    public function close(): BufferedChannel
+    public function close(): self
     {
         if ($this->open)
             $this->set(self::CHAN_SIG_CLOSE);
@@ -133,7 +133,7 @@ class BufferedChannel implements \IteratorAggregate
     /**
      * Queue a value onto the channel, causing all readers to wake up.
      */
-    public function set($value): BufferedChannel
+    public function set($value): self
     { 
         /*
             Rules:
@@ -167,7 +167,7 @@ class BufferedChannel implements \IteratorAggregate
 	/**
 	 * Alias for Channel::set().
 	 */
-	public function put($value): BufferedChannel
+	public function put($value): self
 	{
 		return $this->set($value);
 	}
@@ -177,8 +177,11 @@ class BufferedChannel implements \IteratorAggregate
      * 
      * If you have a large number of items to push onto the queue at once then this
      * method will be faster than calling set() for every element in the array.
+     * 
+     * -- parameters:
+     * @param array<mixed> $values The dataset to store.
      */
-    public function bulk_set(array $values): BufferedChannel
+    public function bulk_set(array $values): self
     {
         /*
             Rules:
@@ -220,9 +223,12 @@ class BufferedChannel implements \IteratorAggregate
      * a value of NULL will be returned if nothing is received
      * prior to the expiry.
      * 
-     * $wait defaults to TRUE.
+     * --parameters:
+     * @param int|bool $wait If TRUE then block indefinitely until a new value is available. If FALSE then return immediately if there is nothing available. If a number is passed then wait the given number of seconds before giving up. Passing 0 is equivalent to passing TRUE. Passing a negative number will throw an exception.
+     * 
+     * @return mixed The next available value, NULL if none was available or a wait timeout was reached. If the channel was closed then the constant CHAN_CLOSED is returned.
      */
-    public function get($wait = true) 
+    public function get(int|bool $wait = true): mixed
     {
 		if (! $this->open) 
 		    return CHAN_CLOSED;
@@ -281,8 +287,7 @@ class BufferedChannel implements \IteratorAggregate
 	/**
 	 * Alias for Channel::get().
 	 */
-	public function next($wait = true)
-	{
+	public function next(int|bool $wait = true): mixed {
 		return $this->get($wait);
 	}
     
@@ -296,9 +301,12 @@ class BufferedChannel implements \IteratorAggregate
      * in seconds. In such a case, if nothing is received before the timeout then
      * a value of NULL will be returned.
      * 
-     * $wait defaults to TRUE.
+     * --parameters:
+     * @param int|bool $wait If TRUE then block indefinitely until a new value is available. If FALSE then return immediately if there is nothing available. If a number is passed then wait the given number of seconds before giving up. Passing 0 is equivalent to passing TRUE. Passing a negative number will throw an exception.
+     * 
+     * @return array<mixed> The next available value, NULL if none was available or a wait timeout was reached. If the channel was closed then the constant CHAN_CLOSED is returned.
      */
-    public function get_all($wait = true) 
+    public function get_all(int|bool $wait = true) : ?array
     {
 		if (! $this->open)
 			return CHAN_CLOSED;
@@ -356,9 +364,9 @@ class BufferedChannel implements \IteratorAggregate
      * doing so.
      * 
      * -- parameters:
-     * @param $wait If $wait is given as an integer of 1 or more then it is used as a timeout in seconds. In such a case, if nothing is received before the timeout then a value of NULL will be returned if nothing is received prior to the expiry. Defaults to TRUE, which means each loop will block until such time as data is received.
+     * @param int|bool $wait If TRUE then block indefinitely until a new value is available. If FALSE then return immediately if there is nothing available. If a number is passed then wait the given number of seconds before giving up. Passing 0 is equivalent to passing TRUE. Passing a negative number will throw an exception.
      */
-    public function incoming($wait = true): \Generator
+    public function incoming(int|bool $wait = true): \Generator
     {
         while (($value = $this->get($wait)) !== CHAN_CLOSED) {
             yield $value;
@@ -369,8 +377,7 @@ class BufferedChannel implements \IteratorAggregate
      * Use the channel object as an iterator for incoming values, looping until it is closed off. This method 
      * has the same effect as calling BufferedChannel::incoming() with the default parameter of TRUE for the $wait parameter.
      */
-    public function getIterator(): \Traversable
-    {
+    public function getIterator(): \Traversable {
         return $this->incoming();
     }
 }
