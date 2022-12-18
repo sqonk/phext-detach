@@ -92,9 +92,9 @@ class TaskMap
      * will be created spawned. NOTE that setting it to unlimited may have a detrimental affect
      * on the performance of the code and the underlying system it is being run on. 
      */
-    public function limit(int $limit): self
+    public function limit(?int $limit): self
     {
-        $this->limit = ($limit > 1) ? $limit : detach_nproc();
+        $this->limit = $limit ?? detach_nproc();
         return $this;
     }
     
