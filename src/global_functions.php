@@ -133,10 +133,6 @@ function detach_nproc(): int
  */
 function channel_select(Channel|BufferedChannel ...$channels): array
 {
-    foreach ($channels as $ch) {
-        if (! $ch instanceof Channel && ! $ch instanceof BufferedChannel)
-            throw new \InvalidArgumentException('channel_select() only accepts objects of type Channel or BufferedChannel');
-    }
     while (true) {
         foreach ($channels as $ch) {
             if (($value = $ch->get(false)) !== null) {
