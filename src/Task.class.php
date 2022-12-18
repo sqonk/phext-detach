@@ -216,7 +216,7 @@ class Task
         $key = $this->key($suffix);
         while (! $written)
         {
-            $this->_synchronised($suffix, function() use ($suffix, &$written, $data, $key) {
+            $this->_synchronised($suffix, function() use (&$written, $data, $key) {
                 if (apcu_add($key, $data, 0))
                     $written = apcu_exists($key);
             });
