@@ -31,7 +31,6 @@ class Dispatcher
      * @var list<Task> 
      */
     static private array $threads = [];
-    static private bool $shutdownSet = false;
         
     /**
      * Execute the provided callback on a seperate process.
