@@ -237,6 +237,9 @@ class BufferedChannel implements \IteratorAggregate
         $started = time();
         $waitTimeout = 0; 
         if (is_int($wait)) {
+            if ($wait < 0)
+                throw new \Exception("Supplied integer for parameter $wait was less than 0.");
+            
             $waitTimeout = $wait;
             $wait = true;
         }
