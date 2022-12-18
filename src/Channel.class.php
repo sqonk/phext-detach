@@ -64,7 +64,7 @@ class Channel implements \IteratorAggregate
     /**
      * Test to see if the channel is currently open. 
      * 
-     * @return TRUE if the channel is open, FALSE if not.
+     * @return bool TRUE if the channel is open, FALSE if not.
      */
     public function open(): bool
     {
