@@ -133,7 +133,7 @@ class BufferedChannel implements \IteratorAggregate
     /**
      * Queue a value onto the channel, causing all readers to wake up.
      */
-    public function set($value): self
+    public function set(mixed $value): self
     { 
         /*
             Rules:
@@ -167,7 +167,7 @@ class BufferedChannel implements \IteratorAggregate
 	/**
 	 * Alias for Channel::set().
 	 */
-	public function put($value): self
+	public function put(mixed $value): self
 	{
 		return $this->set($value);
 	}

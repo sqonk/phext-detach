@@ -26,37 +26,33 @@ class TaskMapTest extends TestCase
     protected function runMap(int $amount, bool $block, ?int $limit)
     {
         $range = range(1, $amount);
-        $map = new TaskMap($range, function($i) {
-        	return $i;
-        });
+        $map = new TaskMap($range, fn($i) => $i);
         $map->block($block);
         $map->limit($limit);
-        if ($limit or $limit === null)
+        
+        if ($block) {
+            $results = $map->start();
+        }
+        else
         {
-            if ($block)
-                $results = $map->start();
-            else
-            {
+            if ($limit > 0 || $limit === null) {
                 $chan = $map->start();
                 $results = [];
                 while (($r = $chan->next()) != CHAN_CLOSED)
                     $results[] = $r;
             }
+            else {
+                $results = $map->start(); // returned value is array of tasks
+                if (! $block)
+                    $results = detach_wait();
+            }
         }
-        else
-        {
-            // limit of 0 (no pool, unrestricted)
-            $results = $map->start();
-            if (! $block)
-                $results = detach_wait();
-        }   
             
         $this->assertSame(count($range), count($results));
-        foreach ($results as $r) {
+        foreach ($results as $r) 
+        {
             $this->assertContains($r, $range);
-            $range = array_filter($range, function($v) use ($r) {
-                return $v != $r;
-            });
+            $range = array_filter($range, fn($v) => $v != $r);
         }
         
         detach_kill(); 

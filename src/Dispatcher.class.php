@@ -43,10 +43,10 @@ class Dispatcher
      * in parallel.
      * 
      * -- parameters:
-     * @param $callback The method to be called from the detached task.
-     * @param $data Any parameters to be passed to the callback method.
+     * @param callable $callback The method to be called from the detached task.
+     * @param array<mixed> $args Any parameters to be passed to the callback method.
      * 
-     * @return The newly created and started task.
+     * @return Task The newly created and started task.
      */
     static public function detach(callable $callback, array $args = []): Task
     {
@@ -65,13 +65,13 @@ class Dispatcher
      * This method creates a new task map and immediately starts it.
      * 
      * -- parameters:
-     * @param $data The array of items to be spread over seperate tasks.
-     * @param $callback The callback method that will receive each item on the seperate task.
-     * @param $params An optional array of additional [constant] parameters that will be passed to the callback. 
-     * @param $block Whether the main program will block execution until all tasks have completed.
-     * @param $limit Set the maximum number of tasks that may run concurrently. 0 = unlimited. Defaults to the number of physical CPU cores on the running system.
+     * @param iterable<mixed> $data The array of items to be spread over seperate tasks.
+     * @param callable $callback The callback method that will receive each item on the seperate task.
+     * @param ?array<mixed> $params An optional array of additional [constant] parameters that will be passed to the callback. 
+     * @param bool $block Whether the main program will block execution until all tasks have completed.
+     * @param int $limit Set the maximum number of tasks that may run concurrently. 0 = unlimited. Defaults to the number of physical CPU cores on the running system.
      *
-     * @return array|BufferedChannel The result changes based on the configuration of the task map.
+     * @return list<mixed>|BufferedChannel The result changes based on the configuration of the task map.
      * @see TaskMap class for more options.
      * @see TaskMap::start() for information on what is returned.
      */
@@ -93,7 +93,9 @@ class Dispatcher
         self::$threads = [];
     }
     
-    // Internal function.
+    /**
+     * @internal
+     */
     static private function cleanup(): void
     {
 		$keys = array_keys(self::$threads);
@@ -112,7 +114,10 @@ class Dispatcher
      * nothing is passed in then it will wait for all currently
      * running tasks to finish.
      * 
-     * @return The result of the task or an array of results depending on how many tasks are being waited on.
+     * --parameters:
+     * @param Task|list<Task>|null $tasks A set of tasks to wait for completion. If NULL then wait for every running task.
+     * 
+     * @return mixed The result of the task or an array of results depending on how many tasks are being waited on.
      */
     static public function wait(Task|array|null $tasks = null): mixed
     {
@@ -146,18 +151,19 @@ class Dispatcher
                 }
         }
 		
-		return array_map(function($t) { 
-            return $t->result(); 
-        }, $tasks);				
+		return array_map(fn($t) => $t->result(), $tasks);				
     }
 	
     /**
-     * Wait for at least one task (out of many) to complete.
+     * Wait for any one task (out of many) to complete.
      * 
      * If nothing is passed in then it will use the set of currently
      * running tasks.
      * 
-     * Returns the result of the first task in the array to finish.
+     * --parameters:
+     * @param ?list<Task> $tasks The set of tasks to consider. If NULL then consider all currently running tasks.
+     * 
+     * @return mixed The result of the first task in the array to finish.
      */
 	static public function wait_any(?array $tasks = null): mixed
 	{

@@ -51,8 +51,8 @@ class TaskMap
      * to a seperate task(s).
      *
      * -- parameters:
-     * @param $data The array of items to distribution across the seperate running tasks.
-     * @param $callback The callback method that will receive each item in $data when executed.
+     * @param array<mixed> $data The array of items to distribution across the seperate running tasks.
+     * @param callable $callback The callback method that will receive each item in $data when executed.
      */
     public function __construct(array $data, callable $callback)
     {

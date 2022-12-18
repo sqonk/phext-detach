@@ -32,7 +32,11 @@ define('TASK_WAIT_TIME', 500);
  */
 class Task 
 {
-    protected $callback; // callback method run from the seperate process.
+    /** 
+     * @var callable $callback 
+     * callback method run from the seperate process.
+     */
+    protected $callback; 
     protected string $pid = ''; // holds the child process id.
     protected bool $isParent = true; // Used internally to determine which address space we are currently in.
 	protected bool $started = false; // has the task actually begun.
@@ -147,10 +151,10 @@ class Task
 	}
 
     /**
-     * Start the task on a spwaned child process, being a clone of the parent.
+     * Start the task on a spawned child process, being a clone of the parent.
      * 
      * -- parameters:
-     * @param $args The parameters to pass to the task's callback when it is executed on the child process.
+     * @param list<mixed> $args The parameters to pass to the task's callback when it is executed on the child process.
      */
     public function start(array $args = []): void
 	{	
@@ -322,8 +326,7 @@ class Task
         }
     }
     
-    protected function signalHandler(int $signal): void 
-	{
+    protected function signalHandler(int $signal): void {
         // currently does nothing.
     }
 }

@@ -31,13 +31,12 @@ define('CHAN_CLOSED', '__CHANCLOSED__');
  * in parallel.
  * 
  * -- parameters:
- * @param $callback The method to be called from the detached task.
- * @param $data Any parameters to be passed to the callback method.
+ * @param callable $callback The method to be called from the detached task.
+ * @param array<mixed> $args Any parameters to be passed to the callback method.
  * 
- * @return The newly created and started task.
+ * @return Task The newly created and started task.
  */
-function detach(callable $callback, array $args = []): Task
-{
+function detach(callable $callback, array $args = []): Task {
     return Dispatcher::detach($callback, $args);
 }
 
@@ -99,6 +98,8 @@ function detach_kill(): void
 
 /**
  * Return the number of physical CPU cores present on the running system.
+ * 
+ * @return int The number of physical CPU cores present on the running system.
  */
 function detach_nproc(): int
 {
@@ -126,11 +127,11 @@ function detach_nproc(): int
  * This method will block indefinitely until it receives a non-null value from one of the provided channels. It
  * should be noted that any channel closure will also qualify as a valid return value.
  * 
- * @return an array containing the first value received and the respective channel to have received it.
+ * @return array{mixed, Channel|BufferedChannel} $channels An array containing the first value received and the respective channel to have received it.
  * 
  * @throws InvalidArgumentException if any parameter given is not an object of type Channel or BufferedChannel.
  */
-function channel_select(...$channels): array
+function channel_select(Channel|BufferedChannel ...$channels): array
 {
     foreach ($channels as $ch) {
         if (! $ch instanceof Channel && ! $ch instanceof BufferedChannel)
