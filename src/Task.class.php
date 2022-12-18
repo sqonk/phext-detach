@@ -37,7 +37,7 @@ class Task
      * callback method run from the seperate process.
      */
     protected $callback; 
-    protected string $pid = ''; // holds the child process id.
+    protected int|string $pid = ''; // holds the child process id.
     protected bool $isParent = true; // Used internally to determine which address space we are currently in.
 	protected bool $started = false; // has the task actually begun.
     protected string $uuid;
@@ -46,7 +46,6 @@ class Task
     protected const pPARENT = 'parent';
     
     static protected string $currentPID = '_parent_';
-    static protected string $rootPID = '';
     
     static private bool $envPassed = false;
     
@@ -60,13 +59,6 @@ class Task
             throw new \RuntimeException("Detach requires the APCu be enabled for CLI usage (add apc.enable_cli to your php.ini).");
     
         self::$envPassed = true;
-    }
-    
-    static public function rootPID(): string
-    {
-        if (! self::$rootPID)
-            self::$rootPID = getmypid();
-        return self::$rootPID;
     }
     
     static public function currentPID(): string {
@@ -83,9 +75,7 @@ class Task
 	{
     	if ($callback !== null)
         	$this->setRunnable($callback);
-        
-        self::rootPID(); // ensure the root PID is set before we spawn.
-        
+                
         $this->uuid = uniqid(true);
         
         $child = $this->key(self::pCHILD);
@@ -96,6 +86,9 @@ class Task
     }
 
     protected function key(string $suffix): string {
+        // if ($this->pid < 0) {
+        //     throw new \Exception("Attempt to acquire key before pid has been set.");
+        // }
         return "TASKID-{$this->pid}-{$this->uuid}_$suffix";
     }
 	
@@ -118,8 +111,22 @@ class Task
     /**
      * Returns the process id (pid) of the child process.
      */
-    public function pid(): string {
+    public function pid(): int {
         return $this->pid;
+    }
+    
+    /**
+     * Set the PID of the task. This will be different for the parent and child processes.
+     */
+    public function setPID(int $pid): void 
+    {
+        $this->pid = $pid;
+        
+        /*$child = $this->key(self::pCHILD);
+        $parent = $this->key(self::pPARENT);
+        foreach ([$parent, $child, "$parent.lock", "$child.lock"] as $key)
+            if (apcu_exists($key)) 
+                apcu_delete($key);*/
     }
     
     /**
@@ -169,17 +176,20 @@ class Task
         if ($pid) 
 		{
             // parent process receives the pid.
-            $this->pid = $pid;
-            $key = $this->key(self::pPARENT);
+            $this->setPID($pid);
         }
         else 
 		{
 			// child process entry point.
 			$this->isParent = false;	
-            $this->pid = getmypid();
+            $pid = getmypid();
+            if ($pid === false) {
+                throw new \Exception("Unable to retrieve child process ID.");
+            }
+            $this->setPID($pid);
             Dispatcher::_clear();
             
-            self::$currentPID = $this->pid;		
+            self::$currentPID = (string)$this->pid();		
 			
             // child
             pcntl_signal(SIGTERM, array($this, 'signalHandler'));
