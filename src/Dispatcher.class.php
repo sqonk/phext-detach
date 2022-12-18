@@ -38,7 +38,7 @@ class Dispatcher
      * Each call creates a Task, which is a spawned
      * subprocess that operates independently of the original process.
      * 
-     * It is useful for environnments that need to run a block of code
+     * It is useful for environments that need to run a block of code
      * in parallel.
      * 
      * -- parameters:

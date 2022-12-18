@@ -265,7 +265,7 @@ class Task
             {
                 $ok = true;
                 $this->_synchronised($suffix, function() use (&$value, &$read, $key, &$ok) { 
-                    if (apcu_exists($key)) { 
+                    if (apcu_exists($key)) { // @phpstan-ignore-line
                         $value = apcu_fetch($key, $ok); 
                         if ($ok) { 
                             apcu_delete($key);

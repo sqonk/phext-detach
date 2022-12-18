@@ -158,7 +158,7 @@ class BufferedChannel implements \IteratorAggregate
                 usleep(TASK_WAIT_TIME); 
         }
         
-        if ($written && $value !== self::CHAN_SIG_CLOSE && $this->_hitCapcity())
+        if ($written && $value !== self::CHAN_SIG_CLOSE && $this->_hitCapcity()) // @phpstan-ignore-line
             $this->close();
                 
         return $this;
@@ -206,7 +206,7 @@ class BufferedChannel implements \IteratorAggregate
                 usleep(TASK_WAIT_TIME); 
         }
         
-        if ($written && $this->_hitCapcity())
+        if ($written && $this->_hitCapcity()) // @phpstan-ignore-line
             $this->close();
                 
         return $this;
