@@ -18,6 +18,7 @@ namespace sqonk\phext\detach;
 * express or implied. See the License for the specific language governing
 * permissions and limitations under the License.
 */
+use sqonk\phext\core\arrays;
 
 /**
  * A BufferedChannel is an queue of values that may be passed between tasks. Unlike a standard channel, 
@@ -28,9 +29,9 @@ namespace sqonk\phext\detach;
  * 
  * BufferedChannels are an effective bottle-necking system where data obtained from multiple tasks may 
  * need to be fed into a singular thread for post-processing.
+ * 
+ * @implements \IteratorAggregate<int, BufferedChannel>
  */
-use sqonk\phext\core\arrays;
-
 class BufferedChannel implements \IteratorAggregate
 {
     protected bool $open = true;

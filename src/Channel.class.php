@@ -31,6 +31,8 @@ namespace sqonk\phext\detach;
  * indefinitely for more values. BufferedChannels have the ability to signal their closure prior to script
  * termination but a normal Channel does not, meaning that they have the potential to leave spawned subprocesses 
  * hanging after the parent script has since terminated if they are never closed.
+ * 
+ * @implements \IteratorAggregate<int, Channel>
  */
 class Channel implements \IteratorAggregate
 {    
