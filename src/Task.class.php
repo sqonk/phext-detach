@@ -76,7 +76,7 @@ class Task
     	if ($callback !== null)
         	$this->setRunnable($callback);
                 
-        $this->uuid = uniqid(true);
+        $this->uuid = uniqid(more_entropy:true);
         
         $child = $this->key(self::pCHILD);
         $parent = $this->key(self::pPARENT);
