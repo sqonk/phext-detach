@@ -309,7 +309,7 @@ class BufferedChannel implements \IteratorAggregate
      * 
      * @return array<mixed> The next available value, NULL if none was available or a wait timeout was reached. If the channel was closed then the constant CHAN_CLOSED is returned.
      */
-    public function get_all(int|bool $wait = true) : ?array
+    public function get_all(int|bool $wait = true) : array|string|null
     {
 		if (! $this->open)
 			return CHAN_CLOSED;
