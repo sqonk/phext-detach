@@ -6,6 +6,8 @@ A BufferedChannel is an queue of values that may be passed between tasks. Unlike
 The queue is unordered, meaning that values may be read in in a different order from that of which they were put in.
 
 BufferedChannels are an effective bottle-necking system where data obtained from multiple tasks may need to be fed into a singular thread for post-processing.
+
+@implements \IteratorAggregate<int, BufferedChannel>
 #### Methods
 - [__construct](#__construct)
 - [__destruct](#__destruct)
@@ -49,7 +51,7 @@ Every time this method is called it will reset the write count to 0.
 ------
 ##### close
 ```php
-public function close() : sqonk\phext\detach\BufferedChannel
+public function close() : self
 ```
 Close off the channel, signalling to the receiver that no further values will be sent.
 
@@ -57,7 +59,7 @@ Close off the channel, signalling to the receiver that no further values will be
 ------
 ##### set
 ```php
-public function set($value) : sqonk\phext\detach\BufferedChannel
+public function set(mixed $value) : self
 ```
 Queue a value onto the channel, causing all readers to wake up.
 
@@ -65,7 +67,7 @@ Queue a value onto the channel, causing all readers to wake up.
 ------
 ##### put
 ```php
-public function put($value) : sqonk\phext\detach\BufferedChannel
+public function put(mixed $value) : self
 ```
 Alias for Channel::set().
 
@@ -73,29 +75,33 @@ Alias for Channel::set().
 ------
 ##### bulk_set
 ```php
-public function bulk_set(array $values) : sqonk\phext\detach\BufferedChannel
+public function bulk_set(array $values) : self
 ```
 Queue a bulk set of values onto the channel, causing all readers to wake up.
 
 If you have a large number of items to push onto the queue at once then this method will be faster than calling set() for every element in the array.
 
+- **array<mixed>** $values The dataset to store.
+
 
 ------
 ##### get
 ```php
-public function get($wait = true) 
+public function get(int|bool $wait = true) : mixed
 ```
 Obtain the next value on the queue (if any). If $wait is `TRUE` then this method will block until a new value is received. Be aware that in this mode the method will block forever if no further values are queued from other tasks.
 
 If $wait is given as an integer of 1 or more then it is used as a timeout in seconds. In such a case, if nothing is received before the timeout then a value of `NULL` will be returned if nothing is received prior to the expiry.
 
-$wait defaults to `TRUE`.
+--parameters: @param int|bool $wait If `TRUE` then block indefinitely until a new value is available. If `FALSE` then return immediately if there is nothing available. If a number is passed then wait the given number of seconds before giving up. Passing 0 is equivalent to passing `TRUE`. Passing a negative number will throw an exception.
+
+**Returns:**  mixed The next available value, `NULL` if none was available or a wait timeout was reached. If the channel was closed then the constant CHAN_CLOSED is returned.
 
 
 ------
 ##### next
 ```php
-public function next($wait = true) 
+public function next(int|bool $wait = true) : mixed
 ```
 Alias for Channel::get().
 
@@ -103,23 +109,25 @@ Alias for Channel::get().
 ------
 ##### get_all
 ```php
-public function get_all($wait = true) 
+public function get_all(int|bool $wait = true) : array|string|null
 ```
 Obtain all values currently residing on the queue (if any). If $wait is `TRUE` then this method will block until a new value is received. Be aware that in this mode the method will block forever if no further values are queued from other tasks.
 
 If $wait is given as an integer of 1 or more then it is used as a timeout in seconds. In such a case, if nothing is received before the timeout then a value of `NULL` will be returned.
 
-$wait defaults to `TRUE`.
+--parameters: @param int|bool $wait If `TRUE` then block indefinitely until a new value is available. If `FALSE` then return immediately if there is nothing available. If a number is passed then wait the given number of seconds before giving up. Passing 0 is equivalent to passing `TRUE`. Passing a negative number will throw an exception.
+
+**Returns:**  array<mixed> The next available value, `NULL` if none was available or a wait timeout was reached. If the channel was closed then the constant CHAN_CLOSED is returned.
 
 
 ------
 ##### incoming
 ```php
-public function incoming($wait = true) : Generator
+public function incoming(int|bool $wait = true) : Generator
 ```
 Yield the channel out to an iterator loop until the point at which it is closed off. If you wish to put your task into an infinite scanning loop for the lifetime of the channel, for example to process all incoming data, then this can provide a more simplistic model for doing so.
 
-- **$wait** If $wait is given as an integer of 1 or more then it is used as a timeout in seconds. In such a case, if nothing is received before the timeout then a value of `NULL` will be returned if nothing is received prior to the expiry. Defaults to `TRUE`, which means each loop will block until such time as data is received.
+- **int|bool** $wait If `TRUE` then block indefinitely until a new value is available. If `FALSE` then return immediately if there is nothing available. If a number is passed then wait the given number of seconds before giving up. Passing 0 is equivalent to passing `TRUE`. Passing a negative number will throw an exception.
 
 
 ------

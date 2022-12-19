@@ -5,12 +5,12 @@ This class is a modernised and rewritten version of the Thread class originally 
 
 You will not need to access this class directly unless you wish to extend the class and manage the execution yourself. Instance creation is exposed through the Dispatcher and the public methods `detach()` and `detach_wait()`.
 #### Methods
-- [rootPID](#rootpid)
 - [currentPID](#currentpid)
 - [__construct](#__construct)
 - [setRunnable](#setrunnable)
 - [runnable](#runnable)
 - [pid](#pid)
+- [setPID](#setpid)
 - [isAlive](#isalive)
 - [complete](#complete)
 - [result](#result)
@@ -19,17 +19,9 @@ You will not need to access this class directly unless you wish to extend the cl
 - [stop](#stop)
 
 ------
-##### rootPID
-```php
-static public function rootPID() 
-```
-No documentation available.
-
-
-------
 ##### currentPID
 ```php
-static public function currentPID() 
+static public function currentPID() : string
 ```
 No documentation available.
 
@@ -37,7 +29,7 @@ No documentation available.
 ------
 ##### __construct
 ```php
-public function __construct($callback = null) 
+public function __construct(callable $callback = null) 
 ```
 Create a new Task.
 
@@ -63,9 +55,17 @@ Get the current callback method. This may either be a callable or a string depen
 ------
 ##### pid
 ```php
-public function pid() : string
+public function pid() : int
 ```
 Returns the process id (pid) of the child process.
+
+
+------
+##### setPID
+```php
+public function setPID(int $pid) : void
+```
+Set the PID of the task. This will be different for the parent and child processes.
 
 
 ------
@@ -87,7 +87,7 @@ A task has completed when it was started but is no longer alive.
 ------
 ##### result
 ```php
-public function result() 
+public function result() : mixed
 ```
 Obtains the result from the child process.
 
@@ -95,7 +95,7 @@ Obtains the result from the child process.
 ------
 ##### unread
 ```php
-public function unread() 
+public function unread() : bool
 ```
 Do we have result data waiting in the pipe that has not been read in by the parent?
 
@@ -105,15 +105,15 @@ Do we have result data waiting in the pipe that has not been read in by the pare
 ```php
 public function start(array $args = []) : void
 ```
-Start the task on a spwaned child process, being a clone of the parent.
+Start the task on a spawned child process, being a clone of the parent.
 
-- **$args** The parameters to pass to the task's callback when it is executed on the child process.
+- **list<mixed>** $args The parameters to pass to the task's callback when it is executed on the child process.
 
 
 ------
 ##### stop
 ```php
-public function stop($signal = SIGKILL, $wait = false) 
+public function stop(int $signal = SIGKILL, bool $wait = false) : void
 ```
 Attempts to stop the child process. Returns true on success and false otherwise.
 
