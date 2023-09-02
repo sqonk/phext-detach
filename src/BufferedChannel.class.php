@@ -48,122 +48,122 @@ class BufferedChannel implements \IteratorAggregate
 	public function __construct()
 	{
 		$this->key = 'BCHAN-'.uniqid();
-        $this->wckey = "$this->key.wc";
-        $this->capkey = "$this->key.cap";
-        $this->createdOnPID = detach_pid();
+      $this->wckey = "$this->key.wc";
+      $this->capkey = "$this->key.cap";
+      $this->createdOnPID = detach_pid();
 	}
     
-    public function __destruct()
-    {
-        if ($this->open and $this->createdOnPID == detach_pid()) {
-            $this->close(); // close off channel from task that created it.
-        }
-    }
-    
-    protected function _synchronised(callable $callback): void
-    {
-        $lock = "{$this->key}.lock";
-        $pid = detach_pid();
-        while (apcu_fetch($lock) != $pid)
-        { 
-            if (! apcu_add($lock, $pid))
-                usleep(TASK_WAIT_TIME);
-        }
-        
-        $callback();
-        
-        apcu_delete($lock);
-    }
+   public function __destruct()
+   {
+       if ($this->open and $this->createdOnPID == detach_pid()) {
+           $this->close(); // close off channel from task that created it.
+       }
+   }
+   
+   protected function _synchronised(callable $callback): void
+   {
+       $lock = "{$this->key}.lock";
+       $pid = detach_pid();
+       while (apcu_fetch($lock) != $pid)
+       { 
+           if (!apcu_add($lock, $pid))
+               usleep(TASK_WAIT_TIME);
+       }
+       
+       $callback();
+       
+       apcu_delete($lock);
+   }
 	
-    /**
-     * Set an arbitrary limit on the number of times data will be read
-     * from the channel. Once the limit has been reached the channel
-     * will be closed.
-     * 
-     * Every time this method is called it will reset the write count to 0.
-     */
+   /**
+    * Set an arbitrary limit on the number of times data will be read
+    * from the channel. Once the limit has been reached the channel
+    * will be closed.
+    * 
+    * Every time this method is called it will reset the write count to 0.
+    */
 	public function capacity(int $totalDeposits): BufferedChannel
 	{
 		apcu_store($this->wckey, 0);
-        apcu_store($this->capkey, $totalDeposits);
-        return $this;
+      apcu_store($this->capkey, $totalDeposits);
+      return $this;
 	}
-    
-    protected function _writeCount(): int
-    {
-        $count = 0;
-        if (apcu_exists($this->wckey)) {
-            $v = apcu_fetch($this->wckey, $pass);
-            if ($pass)
-                $count = $v;
-        }
-        return $count;
-    }
-    
-    protected function _increment(int $amount = 1): void
-    { 
-        if (apcu_exists($this->capkey)) {
-            $current = $this->_writeCount();
-            if (! apcu_store($this->wckey, $current+$amount))
-                println('failed to write inc');
-        }
-    }
-    
-    protected function _hitCapcity(): bool
-    {
-        if (apcu_exists($this->capkey)) {
-            $v = apcu_fetch($this->capkey, $ok);
-            if ($ok) {
-                return $this->_writeCount() >= $v;
-            }
-        }
-        return false;
-    }
-    
-    /**
-     * Close off the channel, signalling to the receiver that no further values will be sent.
-     */
-    public function close(): self
-    {
-        if ($this->open)
-            $this->set(self::CHAN_SIG_CLOSE);
-        
-        return $this;
-    }
+   
+   protected function _writeCount(): int
+   {
+      $count = 0;
+      if (apcu_exists($this->wckey)) {
+          $v = apcu_fetch($this->wckey, $pass);
+          if ($pass)
+              $count = $v;
+      }
+      return $count;
+   }
+   
+   protected function _increment(int $amount = 1): void
+   { 
+       if (apcu_exists($this->capkey)) {
+           $current = $this->_writeCount();
+           if (! apcu_store($this->wckey, $current+$amount))
+               println('failed to write inc');
+       }
+   }
+   
+   protected function _hitCapcity(): bool
+   {
+       if (apcu_exists($this->capkey)) {
+           $v = apcu_fetch($this->capkey, $ok);
+           if ($ok) {
+               return $this->_writeCount() >= $v;
+           }
+       }
+       return false;
+   }
+   
+   /**
+    * Close off the channel, signalling to the receiver that no further values will be sent.
+    */
+   public function close(): self
+   {
+       if ($this->open)
+           $this->set(self::CHAN_SIG_CLOSE);
+       
+       return $this;
+   }
 	
-    /**
-     * Queue a value onto the channel, causing all readers to wake up.
-     */
-    public function set(mixed $value): self
-    { 
-        /*
-            Rules:
-            - Require lock.
-            - Append new data.
-            - Release lock.
-        */
-        $written = false;
-        while (! $written)
-        {
-            $this->_synchronised(function() use ($value, &$written) {
-                $data = apcu_exists($this->key) ? apcu_fetch($this->key) : [];
-                $data[] = $value;
-                
-                if (apcu_store($this->key, $data)) { 
-                    $this->_increment();
-                    $written = true;
-                }
-                    
-            });
-            if (! $written)
-                usleep(TASK_WAIT_TIME); 
-        }
-        
-        if ($written && $value !== self::CHAN_SIG_CLOSE && $this->_hitCapcity()) // @phpstan-ignore-line
-            $this->close();
-                
-        return $this;
-    }
+   /**
+    * Queue a value onto the channel, causing all readers to wake up.
+    */
+   public function set(mixed $value): self
+   { 
+       /*
+           Rules:
+           - Require lock.
+           - Append new data.
+           - Release lock.
+       */
+       $written = false;
+       while (! $written)
+       {
+           $this->_synchronised(function() use ($value, &$written) {
+               $data = apcu_exists($this->key) ? apcu_fetch($this->key) : [];
+               $data[] = $value;
+               
+               if (apcu_store($this->key, $data)) { 
+                   $this->_increment();
+                   $written = true;
+               }
+                   
+           });
+           if (! $written)
+               usleep(TASK_WAIT_TIME); 
+       }
+       
+       if ($written && $value !== self::CHAN_SIG_CLOSE && $this->_hitCapcity()) // @phpstan-ignore-line
+           $this->close();
+               
+       return $this;
+   }
 	
 	/**
 	 * Alias for Channel::set().
@@ -172,63 +172,63 @@ class BufferedChannel implements \IteratorAggregate
 	{
 		return $this->set($value);
 	}
-    
-    /**
-     * Queue a bulk set of values onto the channel, causing all readers to wake up.
-     * 
-     * If you have a large number of items to push onto the queue at once then this
-     * method will be faster than calling set() for every element in the array.
-     * 
-     * -- parameters:
-     * @param array<mixed> $values The dataset to store.
-     */
-    public function bulk_set(array $values): self
-    {
-        /*
-            Rules:
-            - Require lock.
-            - Append new data.
-            - Release lock.
-        */
-        $written = false;
-        while (! $written)
-        {
-            $this->_synchronised(function() use ($values, &$written) {
-                $data = apcu_exists($this->key) ? apcu_fetch($this->key) : [];
-                $data = array_merge($data, $values);
-                
-                if (apcu_store($this->key, $data)) {
-                    $written = true;
-                    $this->_increment(count($values));
-                }
-                    
-            });
-            if (! $written)
-                usleep(TASK_WAIT_TIME); 
-        }
-        
-        if ($written && $this->_hitCapcity()) // @phpstan-ignore-line
-            $this->close();
-                
-        return $this;
-    }
+   
+   /**
+    * Queue a bulk set of values onto the channel, causing all readers to wake up.
+    * 
+    * If you have a large number of items to push onto the queue at once then this
+    * method will be faster than calling set() for every element in the array.
+    * 
+    * -- parameters:
+    * @param array<mixed> $values The dataset to store.
+    */
+   public function bulk_set(array $values): self
+   {
+       /*
+           Rules:
+           - Require lock.
+           - Append new data.
+           - Release lock.
+       */
+       $written = false;
+       while (! $written)
+       {
+           $this->_synchronised(function() use ($values, &$written) {
+               $data = apcu_exists($this->key) ? apcu_fetch($this->key) : [];
+               $data = array_merge($data, $values);
+               
+               if (apcu_store($this->key, $data)) {
+                   $written = true;
+                   $this->_increment(count($values));
+               }
+                   
+           });
+           if (! $written)
+               usleep(TASK_WAIT_TIME); 
+       }
+       
+       if ($written && $this->_hitCapcity()) // @phpstan-ignore-line
+           $this->close();
+               
+       return $this;
+   }
 
-    /**
-     * Obtain the next value on the queue (if any). If $wait is TRUE then
-     * this method will block until a new value is received. Be aware that
-     * in this mode the method will block forever if no further values
-     * are queued from other tasks.
-     * 
-     * If $wait is given as an integer of 1 or more then it is used as a timeout
-     * in seconds. In such a case, if nothing is received before the timeout then
-     * a value of NULL will be returned if nothing is received
-     * prior to the expiry.
-     * 
-     * --parameters:
-     * @param int|bool $wait If TRUE then block indefinitely until a new value is available. If FALSE then return immediately if there is nothing available. If a number is passed then wait the given number of seconds before giving up. Passing 0 is equivalent to passing TRUE. Passing a negative number will throw an exception.
-     * 
-     * @return mixed The next available value, NULL if none was available or a wait timeout was reached. If the channel was closed then the constant CHAN_CLOSED is returned.
-     */
+   /**
+    * Obtain the next value on the queue (if any). If $wait is TRUE then
+    * this method will block until a new value is received. Be aware that
+    * in this mode the method will block forever if no further values
+    * are queued from other tasks.
+    * 
+    * If $wait is given as an integer of 1 or more then it is used as a timeout
+    * in seconds. In such a case, if nothing is received before the timeout then
+    * a value of NULL will be returned if nothing is received
+    * prior to the expiry.
+    * 
+    * --parameters:
+    * @param int|bool $wait If TRUE then block indefinitely until a new value is available. If FALSE then return immediately if there is nothing available. If a number is passed then wait the given number of seconds before giving up. Passing 0 is equivalent to passing TRUE. Passing a negative number will throw an exception.
+    * 
+    * @return mixed The next available value, NULL if none was available or a wait timeout was reached. If the channel was closed then the constant CHAN_CLOSED is returned.
+    */
     public function get(int|bool $wait = true): mixed
     {
 		if (! $this->open) 
@@ -296,20 +296,20 @@ class BufferedChannel implements \IteratorAggregate
 	}
     
     /**
-     * Obtain all values currently residing on the queue (if any). If $wait is TRUE then
-     * this method will block until a new value is received. Be aware that
-     * in this mode the method will block forever if no further values
-     * are queued from other tasks.
-     * 
-     * If $wait is given as an integer of 1 or more then it is used as a timeout
-     * in seconds. In such a case, if nothing is received before the timeout then
-     * a value of NULL will be returned.
-     * 
-     * --parameters:
-     * @param int|bool $wait If TRUE then block indefinitely until a new value is available. If FALSE then return immediately if there is nothing available. If a number is passed then wait the given number of seconds before giving up. Passing 0 is equivalent to passing TRUE. Passing a negative number will throw an exception.
-     * 
-     * @return array<mixed> The next available value, NULL if none was available or a wait timeout was reached. If the channel was closed then the constant CHAN_CLOSED is returned.
-     */
+    * Obtain all values currently residing on the queue (if any). If $wait is TRUE then
+    * this method will block until a new value is received. Be aware that
+    * in this mode the method will block forever if no further values
+    * are queued from other tasks.
+    * 
+    * If $wait is given as an integer of 1 or more then it is used as a timeout
+    * in seconds. In such a case, if nothing is received before the timeout then
+    * a value of NULL will be returned.
+    * 
+    * --parameters:
+    * @param int|bool $wait If TRUE then block indefinitely until a new value is available. If FALSE then return immediately if there is nothing available. If a number is passed then wait the given number of seconds before giving up. Passing 0 is equivalent to passing TRUE. Passing a negative number will throw an exception.
+    * 
+    * @return array<mixed> The next available value, NULL if none was available or a wait timeout was reached. If the channel was closed then the constant CHAN_CLOSED is returned.
+    */
     public function get_all(int|bool $wait = true) : array|string|null
     {
 		if (! $this->open)
