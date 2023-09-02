@@ -40,7 +40,7 @@ function cannon($chan)
         $chan->set($speed);
     }
     
-    // No more values to be sent, close thc channel up, freeing up the parent
+    // No more values to be sent, close the channel up, freeing up the parent
     // which is currently blocked while waiting for more data.
     $chan->close();
 }
