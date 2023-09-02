@@ -247,7 +247,7 @@ class BufferedChannel implements \IteratorAggregate
         
         /*
             - Wait until data is present.
-            - Aquire lock.
+            - Acquire lock.
             - Read data, as long as someone else has not snuck in a got it since we got the lock.
             - Delete value
             - Release lock
