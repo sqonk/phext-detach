@@ -31,8 +31,7 @@ class BufferedChannelTest extends TestCase
         $input = range(1, 100);
         
         // generate seperate tasks, all of which return a number.
-        $chan = new BufferedChannel;
-        $chan->capacity(count($input)); // we'll be waiting on a maximum of 10 inputs.
+        $chan = new BufferedChannel(capacity:count($input)); // we'll be waiting on a maximum of 10 inputs.
 
         $cb = function($i, $chan) {
             usleep(rand(100, 1000));

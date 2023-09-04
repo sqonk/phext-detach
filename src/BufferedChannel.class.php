@@ -45,12 +45,15 @@ class BufferedChannel implements \IteratorAggregate
     /**
      * Construct a new BufferedChannel.
      */                
-	public function __construct()
+	public function __construct(int $capacity = 0)
 	{
 		$this->key = 'BCHAN-'.uniqid();
       $this->wckey = "$this->key.wc";
       $this->capkey = "$this->key.cap";
       $this->createdOnPID = detach_pid();
+      
+      if ($capacity)
+         $this->capacity($capacity);
 	}
     
    public function __destruct()
