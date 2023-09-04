@@ -65,17 +65,17 @@ class BufferedChannel implements \IteratorAggregate
    
    protected function _synchronised(callable $callback): void
    {
-       $lock = "{$this->key}.lock";
-       $pid = detach_pid();
-       while (apcu_fetch($lock) != $pid)
-       { 
-           if (!apcu_add($lock, $pid))
-               usleep(TASK_WAIT_TIME);
-       }
-       
-       $callback();
-       
-       apcu_delete($lock);
+      $lock = "{$this->key}.lock";
+      $pid = detach_pid();
+      while (apcu_fetch($lock) != $pid)
+      { 
+         if (!apcu_add($lock, $pid))
+            usleep(TASK_WAIT_TIME);
+      }
+
+      $callback();
+
+      apcu_delete($lock);
    }
 	
    /**

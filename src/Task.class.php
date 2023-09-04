@@ -157,55 +157,55 @@ class Task
 		return apcu_exists($this->key(self::pPARENT));
 	}
 
-    /**
-     * Start the task on a spawned child process, being a clone of the parent.
-     * 
-     * -- parameters:
-     * @param list<mixed> $args The parameters to pass to the task's callback when it is executed on the child process.
-     */
-    public function start(array $args = []): void
+   /**
+    * Start the task on a spawned child process, being a clone of the parent.
+    * 
+    * -- parameters:
+    * @param list<mixed> $args The parameters to pass to the task's callback when it is executed on the child process.
+    */
+   public function start(array $args = []): void
 	{	
-        if (! self::$envPassed)
+        if (!self::$envPassed)
             self::_checkRequirements();
         
 		$this->started = true; // flag the task has having begun.
-        $pid = @pcntl_fork();
-        if ($pid == -1) 
-            throw new \Exception('pcntl_fork() returned a status of -1. No new process was created');
+      $pid = @pcntl_fork();
+      if ($pid == -1) 
+         throw new \Exception('pcntl_fork() returned a status of -1. No new process was created');
         		
-        if ($pid) 
+      if ($pid) 
 		{
-            // parent process receives the pid.
-            $this->setPID($pid);
-        }
-        else 
+         // parent process receives the pid.
+         $this->setPID($pid);
+      }
+      else 
 		{
 			// child process entry point.
-			$this->isParent = false;	
-            $pid = getmypid();
-            if ($pid === false) {
-                throw new \Exception("Unable to retrieve child process ID.");
-            }
-            $this->setPID($pid);
-            Dispatcher::_clear();
-            
-            self::$currentPID = (string)$this->pid();		
+         $this->isParent = false;	
+         $pid = getmypid();
+         if ($pid === false) {
+             throw new \Exception("Unable to retrieve child process ID.");
+         }
+         $this->setPID($pid);
+         Dispatcher::_clear();
+         
+         self::$currentPID = (string)$this->pid();		
 			
-            // child
-            pcntl_signal(SIGTERM, array($this, 'signalHandler'));
-            
-            register_shutdown_function(function() {
-                $key = $this->key(self::pCHILD);
-                if (apcu_exists($key))
-                    apcu_delete($key); // remove any store data destined for the child.
-                detach_kill();
-            });
-            
-            $r = $this->run(...$args); //println('send to parent');
+         // child
+         pcntl_signal(SIGTERM, array($this, 'signalHandler'));
+         
+         register_shutdown_function(function() {
+             $key = $this->key(self::pCHILD);
+             if (apcu_exists($key))
+                 apcu_delete($key); // remove any store data destined for the child.
+             detach_kill();
+         });
+         
+         $r = $this->run(...$args); //println('send to parent');
 			$this->sendToParent($r);
 			
-            exit;
-        }
+         exit;
+       }
     }
     
     protected function _synchronised(string $suffix, callable $callback): void
@@ -214,7 +214,7 @@ class Task
         $pid = self::$currentPID; 
         while (apcu_fetch($lock) != $pid)
         {  
-            if (! apcu_add($lock, $pid))
+            if (!apcu_add($lock, $pid))
                 usleep(TASK_WAIT_TIME);
         }
         
@@ -301,7 +301,7 @@ class Task
         try {
             if (is_string($this->callback))
             {
-                if (! empty($arguments)) 
+                if (!empty($arguments)) 
                     $resp = call_user_func_array($this->callback, $arguments);
             
                 else 
