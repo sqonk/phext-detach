@@ -25,7 +25,7 @@ BufferedChannels are an effective bottle-necking system where data obtained from
 ------
 ##### __construct
 ```php
-public function __construct() 
+public function __construct(int $capacity = 0) 
 ```
 Construct a new BufferedChannel.
 
