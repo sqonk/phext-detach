@@ -100,7 +100,7 @@ class Dispatcher
 		$keys = array_keys(self::$threads);
         for ($i = 0; $i < count($keys); $i++)
         {
-            if (self::$threads[$keys[$i]]->complete() and ! self::$threads[$keys[$i]]->unread()) 
+            if (self::$threads[$keys[$i]]->complete() and !self::$threads[$keys[$i]]->unread()) 
                 self::$threads[$keys[$i]] = null;
         }
         self::$threads = arrays::compact(self::$threads);
@@ -133,22 +133,23 @@ class Dispatcher
 		
       if ($tasks instanceof Task)
 		{ 
-            while (! $tasks->complete())
+            while (!$tasks->complete())
                 usleep(TASK_WAIT_TIME);
 			return $tasks->result();
 		}		
         
-        $notdone = true;
-        while ($notdone)
-        {
-            usleep(TASK_WAIT_TIME);
-            $notdone = false;
-            foreach ($tasks as $t)
-                if (! $t->complete()) {
-                    $notdone = true;
-                    break;
-                }
-        }
+      $notdone = true;
+      while ($notdone)
+      {
+         usleep(TASK_WAIT_TIME);
+         $notdone = false;
+         foreach ($tasks as $t) {
+            if (!$t->complete()) {
+               $notdone = true;
+               break;
+            }
+         }
+      }
 		
 		return array_map(fn($t) => $t->result(), $tasks);				
     }
@@ -166,35 +167,36 @@ class Dispatcher
      */
 	static public function wait_any(?array $tasks = null) : mixed
 	{
-		if (! $tasks) {
-		    self::cleanup();
-            $tasks = self::$threads;
+		if (!$tasks) {
+		   self::cleanup();
+         $tasks = self::$threads;
 		}
 		
 		if (count($tasks) == 0)
-			return null;
+		   return null;
 		
-        while (true)
-        {
-            usleep(TASK_WAIT_TIME);
-            foreach ($tasks as $t)
-                if ($t->complete()) 
-                    return $t->result(); 
-        }
+      while (true)
+      {
+         usleep(TASK_WAIT_TIME);
+         foreach ($tasks as $t) {
+            if ($t->complete()) 
+               return $t->result(); 
+         }
+      }
 	}
     
-    /**
-     * Immediately stop all running tasks.
-     */
-    static public function kill(): void
-    {
-        foreach (self::$threads as $t) {
-            if ($t->isAlive())
-                $t->stop(SIGKILL, true);
-        }
-        
-        self::$threads = [];
-    }
+   /**
+    * Immediately stop all running tasks.
+    */
+   static public function kill(): void
+   {
+      foreach (self::$threads as $t) {
+         if ($t->isAlive())
+            $t->stop(SIGKILL, true);
+      }
+      
+      self::$threads = [];
+   }
 }
 
 

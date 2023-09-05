@@ -54,7 +54,7 @@ class Channel implements \IteratorAggregate
        $pid = detach_pid();
        while (apcu_fetch($lock) != $pid && $this->open())
        { 
-           if (! apcu_add($lock, $pid))
+           if (!apcu_add($lock, $pid))
                usleep(TASK_WAIT_TIME);
        }
        
@@ -90,7 +90,7 @@ class Channel implements \IteratorAggregate
                     if (apcu_add($this->key, self::CHAN_SIG_CLOSE))
                         $written = true;
                 });
-                if (! $written)
+                if (!$written)
                     usleep(TASK_WAIT_TIME); 
             }
             

@@ -158,7 +158,7 @@ class BufferedChannel implements \IteratorAggregate
                }
                    
            });
-           if (! $written)
+           if (!$written)
                usleep(TASK_WAIT_TIME); 
        }
        
@@ -315,7 +315,7 @@ class BufferedChannel implements \IteratorAggregate
     */
    public function get_all(int|bool $wait = true) : array|string|null
    {
-	   if (! $this->open)
+	   if (!$this->open)
 		   return CHAN_CLOSED;
 		
       $values = null;
@@ -338,7 +338,7 @@ class BufferedChannel implements \IteratorAggregate
           - Release lock
       */
       $read = false;
-      while (! $read)
+      while (!$read)
       {
          if ($waitTimeout > 0 and time()-$started >= $waitTimeout)
              break;
@@ -359,9 +359,9 @@ class BufferedChannel implements \IteratorAggregate
                  }
              });
          }
-         if (! $wait)
+         if (!$wait)
              $read = true;
-         if (! $read)
+         if (!$read)
              usleep(TASK_WAIT_TIME); 
       }
         

@@ -133,7 +133,7 @@ class Task
 	 * A task has completed when it was started but is no longer alive.
 	 */
 	public function complete(): bool {
-		return $this->started and ! $this->isAlive();
+		return $this->started and !$this->isAlive();
 	}
 	
 	/**
@@ -270,7 +270,7 @@ class Task
                   throw new \RuntimeException("Failed to read task store for '$key'");
           }
           
-          if (! $read)
+          if (!$read)
               usleep(TASK_WAIT_TIME); 
       }
       
