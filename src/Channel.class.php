@@ -43,24 +43,24 @@ class Channel implements \IteratorAggregate
     /**
      * Construct a new Channel.
      */
-	public function __construct()
-	{
-        $this->key = "CHANID-".uniqid();
-	}
+    public function __construct()
+	 {
+       $this->key = "CHANID-".uniqid();
+	 }
 
     protected function _synchronised(callable $callback): void
     {
-        $lock = "{$this->key}.lock";
-        $pid = detach_pid();
-        while (apcu_fetch($lock) != $pid && $this->open())
-        { 
-            if (! apcu_add($lock, $pid))
-                usleep(TASK_WAIT_TIME);
-        }
-        
-        $callback();
-        
-        apcu_delete($lock);
+       $lock = "{$this->key}.lock";
+       $pid = detach_pid();
+       while (apcu_fetch($lock) != $pid && $this->open())
+       { 
+           if (! apcu_add($lock, $pid))
+               usleep(TASK_WAIT_TIME);
+       }
+       
+       $callback();
+       
+       apcu_delete($lock);
     }
     
     /**
@@ -70,10 +70,10 @@ class Channel implements \IteratorAggregate
      */
     public function open(): bool
     {
-        if ($this->open && apcu_exists($this->key)) {
-            $this->open = (apcu_fetch($this->key) != self::CHAN_SIG_CLOSE);
-        }
-        return $this->open;
+       if ($this->open && apcu_exists($this->key)) {
+           $this->open = (apcu_fetch($this->key) != self::CHAN_SIG_CLOSE);
+       }
+       return $this->open;
     }
     
     /**
@@ -84,7 +84,7 @@ class Channel implements \IteratorAggregate
         if ($this->open())
         {
             $written = false;
-            while (! $written)
+            while (!$written)
             {
                 $this->_synchronised(function() use (&$written) {
                     if (apcu_add($this->key, self::CHAN_SIG_CLOSE))
@@ -108,18 +108,18 @@ class Channel implements \IteratorAggregate
      */
     public function set(mixed $value): self
     {
-        if (! $this->open())
+        if (!$this->open())
             return $this;
         
         $written = false;
-        while (! $written)
+        while (!$written)
         {
-            $this->_synchronised(function() use ($value, &$written) {
-                if (apcu_add($this->key, $value))
-                    $written = true;
-            });
-            if (! $written)
-                usleep(TASK_WAIT_TIME); 
+           $this->_synchronised(function() use ($value, &$written) {
+           if (apcu_add($this->key, $value))
+              $written = true;
+         });
+         if (!$written)
+            usleep(TASK_WAIT_TIME); 
         }
         
         
@@ -156,10 +156,10 @@ class Channel implements \IteratorAggregate
      */
     public function get(bool|int $wait = true): mixed
     {
-        if (! $this->open)
-            return CHAN_CLOSED;
+       if (!$this->open)
+           return CHAN_CLOSED;
         
-		$value = null;
+		  $value = null;
         $started = time();
         $waitTimeout = 0; 
         if (is_int($wait)) {
@@ -175,25 +175,25 @@ class Channel implements \IteratorAggregate
             - Release lock
         */
         $read = false;
-        while (! $read)
+        while (!$read)
         {
             if ($waitTimeout > 0 and time()-$started >= $waitTimeout)
-                break;
+               break;
             
             if (apcu_exists($this->key))
             {
-                $this->_synchronised(function() use (&$value, &$read) {
-                    if (apcu_exists($this->key)) {
-                        $value = apcu_fetch($this->key);
-                        if ($value != self::CHAN_SIG_CLOSE)
-                            apcu_delete($this->key);
-                        $read = true;
-                    }
-                });
+               $this->_synchronised(function() use (&$value, &$read) {
+               if (apcu_exists($this->key)) {
+                     $value = apcu_fetch($this->key);
+                     if ($value != self::CHAN_SIG_CLOSE)
+                         apcu_delete($this->key);
+                     $read = true;
+                  }
+               });
             }
-            if (! $wait)
+            if (!$wait)
                 $read = true;
-            if (! $read)
+            if (!$read)
                 usleep(TASK_WAIT_TIME); 
         }
         
@@ -209,7 +209,7 @@ class Channel implements \IteratorAggregate
 	/**
 	 * Alias for Channel::get().
 	 */
-	public function next(bool|int $wait = true): mixed {
+   public function next(bool|int $wait = true): mixed {
 		return $this->get($wait);
 	}
     

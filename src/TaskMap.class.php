@@ -56,11 +56,11 @@ class TaskMap
      */
     public function __construct(array $data, callable $callback)
     {
-        $this->data = $data;
-        $this->callback = $callback;
-        
-        // default the pool limit to the number of cores on the computer.
-        $this->limit = detach_nproc();
+       $this->data = $data;
+       $this->callback = $callback;
+       
+       // default the pool limit to the number of cores on the computer.
+       $this->limit = detach_nproc();
     }
     
     /**
@@ -70,8 +70,8 @@ class TaskMap
      */
     public function block(bool $waitForCompletion): self
     {
-        $this->block = $waitForCompletion;
-        return $this;
+       $this->block = $waitForCompletion;
+       return $this;
     }
     
     /**
@@ -82,8 +82,8 @@ class TaskMap
      */
     public function params(mixed ...$args): self
     {
-        $this->params = $args;
-        return $this;
+       $this->params = $args;
+       return $this;
     }
     
     /**
@@ -94,44 +94,44 @@ class TaskMap
      */
     public function limit(?int $limit): self
     {
-        $this->limit = $limit ?? detach_nproc();
-        return $this;
+       $this->limit = $limit ?? detach_nproc();
+       return $this;
     }
     
     protected function _runPool(): mixed
     {
-        // migrate the data to process over to a buffered channel that will feed the tasks.
-        $chan = new BufferedChannel;
-        $chan->bulk_set($this->data)->close();
-        
-        $outBuffer = new BufferedChannel;
-        $outBuffer->capacity(count($this->data));
-        
-        $tasks = [];
-        foreach (range(1, $this->limit) as $i)
-        { 
-            $tasks[] = Dispatcher::detach(function($feed, $out) {
-                
-                while (($item = $feed->next()) !== CHAN_CLOSED)
-                {
-                    $params = is_array($item) ? $item : [$item];
-                    if ($this->params)
-                        $params = array_merge($params, $this->params);
-        
-                    $r = ($this->callback)(...$params);
-                    $out->put($r);
-                }
-            }, 
-            [$chan, $outBuffer]);
-        }
-        
-        if ($this->block)
-        {
-            detach_wait($tasks);
-            return $outBuffer->get_all(false);
-        }
-        
-        return $outBuffer;
+       // migrate the data to process over to a buffered channel that will feed the tasks.
+       $chan = new BufferedChannel;
+       $chan->bulk_set($this->data)->close();
+       
+       $outBuffer = new BufferedChannel;
+       $outBuffer->capacity(count($this->data));
+       
+       $tasks = [];
+       foreach (range(1, $this->limit) as $i)
+       { 
+           $tasks[] = Dispatcher::detach(function($feed, $out) {
+               
+               while (($item = $feed->next()) !== CHAN_CLOSED)
+               {
+                   $params = is_array($item) ? $item : [$item];
+                   if ($this->params)
+                       $params = array_merge($params, $this->params);
+       
+                   $r = ($this->callback)(...$params);
+                   $out->put($r);
+               }
+           }, 
+           [$chan, $outBuffer]);
+       }
+       
+       if ($this->block)
+       {
+           detach_wait($tasks);
+           return $outBuffer->get_all(false);
+       }
+       
+       return $outBuffer;
     }
 
     /**
@@ -149,24 +149,23 @@ class TaskMap
      */
     public function start(): array|BufferedChannel
     {
-        if ($this->limit > 0)
-        {
-            return $this->_runPool();
-        }
-        else
-        {
-            $tasks = [];
-            foreach ($this->data as $item)
-            {
-                $params = is_array($item) ? $item : [$item];
-                if ($this->params)
-                    $params = array_merge($params, $this->params);
-            
-                $tasks[] = Dispatcher::detach($this->callback, $params);               
-            }
-            if ($this->block)
-                return Dispatcher::wait($tasks);
-            return $tasks;
-        }
+       if ($this->limit > 0) {
+          return $this->_runPool();
+       }
+       else
+       {
+          $tasks = [];
+          foreach ($this->data as $item)
+          {
+              $params = is_array($item) ? $item : [$item];
+              if ($this->params)
+                  $params = array_merge($params, $this->params);
+          
+              $tasks[] = Dispatcher::detach($this->callback, $params);               
+          }
+          if ($this->block)
+              return Dispatcher::wait($tasks);
+          return $tasks;
+       }
     }
 }

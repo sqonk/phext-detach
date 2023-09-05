@@ -39,7 +39,7 @@ class Task
     protected $callback; 
     protected int|string $pid = ''; // holds the child process id.
     protected bool $isParent = true; // Used internally to determine which address space we are currently in.
-	protected bool $started = false; // has the task actually begun.
+	 protected bool $started = false; // has the task actually begun.
     protected string $uuid;
     
     protected const pCHILD = 'child';
@@ -51,9 +51,9 @@ class Task
     
     static private function _checkRequirements(): void
     {
-        if (! function_exists('pcntl_fork'))
+        if (!function_exists('pcntl_fork'))
             throw new \RuntimeException("Detach requires the PCNTL extension to be installed and active.");
-        if (! function_exists('apcu_fetch'))
+        if (!function_exists('apcu_fetch'))
             throw new \RuntimeException("Detach requires the APCu extension to be installed and active.");
         if (php_sapi_name() == 'cli' && ini_get('apc.enable_cli') != 1)
             throw new \RuntimeException("Detach requires the APCu be enabled for CLI usage (add apc.enable_cli to your php.ini).");
@@ -65,32 +65,31 @@ class Task
         return self::$currentPID;
     }
 	
-    /**
-     * Create a new Task. 
-     * 
-     * This merely creates the object. To schedule it for execution
-     * you must call `start()` on it.
-     */    
-    public function __construct(?callable $callback = null) 
+   /**
+    * Create a new Task. 
+    * 
+    * This merely creates the object. To schedule it for execution
+    * you must call `start()` on it.
+    */    
+   public function __construct(?callable $callback = null) 
 	{
-    	if ($callback !== null)
-        	$this->setRunnable($callback);
+      if ($callback !== null)
+         $this->setRunnable($callback);
                 
-        $this->uuid = uniqid(more_entropy:true);
-        
-        $child = $this->key(self::pCHILD);
-        $parent = $this->key(self::pPARENT);
-        foreach ([$parent, $child, "$parent.lock", "$child.lock"] as $key)
-            if (apcu_exists($key)) 
-                apcu_delete($key);
-    }
+      $this->uuid = uniqid(more_entropy:true);
+      
+      $child = $this->key(self::pCHILD);
+      $parent = $this->key(self::pPARENT);
+      
+      foreach ([$parent, $child, "$parent.lock", "$child.lock"] as $key) {
+          if (apcu_exists($key)) 
+              apcu_delete($key);
+      }
+   }
 
-    protected function key(string $suffix): string {
-        // if ($this->pid < 0) {
-        //     throw new \Exception("Attempt to acquire key before pid has been set.");
-        // }
-        return "TASKID-{$this->pid}-{$this->uuid}_$suffix";
-    }
+   protected function key(string $suffix): string {
+      return "TASKID-{$this->pid}-{$this->uuid}_$suffix";
+   }
 	
 	/**
 	 * Get or set the callback for the child process to run.
@@ -108,33 +107,27 @@ class Task
 		return $this->callback;
 	}
     
-    /**
-     * Returns the process id (pid) of the child process.
-     */
-    public function pid(): int {
-        return $this->pid;
-    }
-    
-    /**
-     * Set the PID of the task. This will be different for the parent and child processes.
-     */
-    public function setPID(int $pid): void 
-    {
-        $this->pid = $pid;
-        
-        /*$child = $this->key(self::pCHILD);
-        $parent = $this->key(self::pPARENT);
-        foreach ([$parent, $child, "$parent.lock", "$child.lock"] as $key)
-            if (apcu_exists($key)) 
-                apcu_delete($key);*/
-    }
-    
-    /**
-     * Checks if the child process is alive.
-     */
-    public function isAlive(): bool {
-        return pcntl_waitpid($this->pid, $status, WNOHANG) === 0;
-    }
+   /**
+    * Returns the process id (pid) of the child process.
+    */
+   public function pid(): int {
+      return $this->pid;
+   }
+   
+   /**
+    * Set the PID of the task. This will be different for the parent and child processes.
+    */
+   public function setPID(int $pid): void 
+   {
+       $this->pid = $pid;
+   }
+   
+   /**
+    * Checks if the child process is alive.
+    */
+   public function isAlive(): bool {
+      return pcntl_waitpid($this->pid, $status, WNOHANG) === 0;
+   }
 	
 	/**
 	 * A task has completed when it was started but is no longer alive.
@@ -164,17 +157,17 @@ class Task
     * @param list<mixed> $args The parameters to pass to the task's callback when it is executed on the child process.
     */
    public function start(array $args = []): void
-	{	
-        if (!self::$envPassed)
-            self::_checkRequirements();
-        
+   {	
+      if (!self::$envPassed)
+          self::_checkRequirements();
+      
 		$this->started = true; // flag the task has having begun.
       $pid = @pcntl_fork();
-      if ($pid == -1) 
+      if ($pid == -1) {
          throw new \Exception('pcntl_fork() returned a status of -1. No new process was created');
+      }
         		
-      if ($pid) 
-		{
+      if ($pid) {
          // parent process receives the pid.
          $this->setPID($pid);
       }
@@ -205,38 +198,38 @@ class Task
 			$this->sendToParent($r);
 			
          exit;
-       }
-    }
+      }
+   }
     
-    protected function _synchronised(string $suffix, callable $callback): void
-    {
-        $lock = $this->key($suffix).".lock";
-        $pid = self::$currentPID; 
-        while (apcu_fetch($lock) != $pid)
-        {  
-            if (!apcu_add($lock, $pid))
-                usleep(TASK_WAIT_TIME);
-        }
-        
-        $callback();
-        
-        apcu_delete($lock);
-    }
+   protected function _synchronised(string $suffix, callable $callback): void
+   {
+      $lock = $this->key($suffix).".lock";
+      $pid = self::$currentPID; 
+      while (apcu_fetch($lock) != $pid)
+      {  
+          if (!apcu_add($lock, $pid))
+              usleep(TASK_WAIT_TIME);
+      }
+      
+      $callback();
+      
+      apcu_delete($lock);
+   }
 	
 	// Send data to the desired process (parent or child).
 	protected function write(string $suffix, mixed $data): void
 	{
-        $written = false;
-        $key = $this->key($suffix);
-        while (! $written)
-        {
-            $this->_synchronised($suffix, function() use (&$written, $data, $key) {
-                if (apcu_add($key, $data, 0))
-                    $written = apcu_exists($key);
-            });
-            if (! $written)
-                usleep(TASK_WAIT_TIME);
-        }
+      $written = false;
+      $key = $this->key($suffix);
+      while (!$written)
+      {
+          $this->_synchronised($suffix, function() use (&$written, $data, $key) {
+              if (apcu_add($key, $data, 0))
+                  $written = apcu_exists($key);
+          });
+          if (!$written)
+              usleep(TASK_WAIT_TIME);
+      }
 	}
 	
 	// Called from child.
@@ -255,33 +248,33 @@ class Task
 	// Read data from the desired process (parent or child).
 	protected function read(string $suffix): mixed
 	{
-		$key = $this->key($suffix);
-        $value = '';
-        
-        $read = false;
-        while (! $read)
-        {
-            if (apcu_exists($key))
-            {
-                $ok = true;
-                $this->_synchronised($suffix, function() use (&$value, &$read, $key, &$ok) { 
-                    if (apcu_exists($key)) { // @phpstan-ignore-line
-                        $value = apcu_fetch($key, $ok); 
-                        if ($ok) { 
-                            apcu_delete($key);
-                            $read = true;
-                        }
-                    }
-                });
-                if (! $ok)
-                    throw new \RuntimeException("Failed to read task store for '$key'");
-            }
-            
-            if (! $read)
-                usleep(TASK_WAIT_TIME); 
-        }
-        
-        return $value;
+	   $key = $this->key($suffix);
+      $value = '';
+      
+      $read = false;
+      while (!$read)
+      {
+          if (apcu_exists($key))
+          {
+              $ok = true;
+              $this->_synchronised($suffix, function() use (&$value, &$read, $key, &$ok) { 
+                  if (apcu_exists($key)) { // @phpstan-ignore-line
+                      $value = apcu_fetch($key, $ok); 
+                      if ($ok) { 
+                          apcu_delete($key);
+                          $read = true;
+                      }
+                  }
+              });
+              if (!$ok)
+                  throw new \RuntimeException("Failed to read task store for '$key'");
+          }
+          
+          if (! $read)
+              usleep(TASK_WAIT_TIME); 
+      }
+      
+      return $value;
 	}
 	
 	// called from parent.
@@ -297,46 +290,46 @@ class Task
 	// Main entry point of the child process.
 	protected function run(mixed ...$arguments): mixed
 	{
-        $resp = null;
-        try {
-            if (is_string($this->callback))
-            {
-                if (!empty($arguments)) 
-                    $resp = call_user_func_array($this->callback, $arguments);
-            
-                else 
-                    $resp = call_user_func($this->callback);
-            }
-            else 
-                $resp = ($this->callback)(...$arguments);
-        }
-        catch (\Throwable $err) {
-            println($err->getMessage());
-            println($err->getTraceAsString());
-        }
+      $resp = null;
+      try {
+          if (is_string($this->callback))
+          {
+              if (!empty($arguments)) 
+                  $resp = call_user_func_array($this->callback, $arguments);
+          
+              else 
+                  $resp = call_user_func($this->callback);
+          }
+          else 
+              $resp = ($this->callback)(...$arguments);
+      }
+      catch (\Throwable $err) {
+          println($err->getMessage());
+          println($err->getTraceAsString());
+      }
         
 		return $resp;
 	}
     
-    /**
-     * Attempts to stop the child process. Returns true on success and false otherwise.
-     * 
-     * -- parameters:
-     * @param $signal - SIGKILL/SIGTERM
-     * @param $wait - whether or not to block while the process exits.
-     */
-    public function stop(int $signal = SIGKILL, bool $wait = false): void
+   /**
+    * Attempts to stop the child process. Returns true on success and false otherwise.
+    * 
+    * -- parameters:
+    * @param $signal - SIGKILL/SIGTERM
+    * @param $wait - whether or not to block while the process exits.
+    */
+   public function stop(int $signal = SIGKILL, bool $wait = false): void
 	{
-        if ($this->isAlive()) 
+      if ($this->isAlive()) 
 		{
-            posix_kill($this->pid, $signal);
-            if ($wait) {
-                pcntl_waitpid($this->pid, $status);
-            }
-        }
-    }
+         posix_kill($this->pid, $signal);
+         if ($wait) {
+            pcntl_waitpid($this->pid, $status);
+         }
+      }
+   }
     
-    protected function signalHandler(int $signal): void {
-        // currently does nothing.
-    }
+   protected function signalHandler(int $signal): void {
+       // currently does nothing.
+   }
 }

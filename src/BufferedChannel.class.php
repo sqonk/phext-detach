@@ -96,29 +96,29 @@ class BufferedChannel implements \IteratorAggregate
    {
       $count = 0;
       if (apcu_exists($this->wckey)) {
-          $v = apcu_fetch($this->wckey, $pass);
-          if ($pass)
-              $count = $v;
+         $v = apcu_fetch($this->wckey, $pass);
+         if ($pass)
+            $count = $v;
       }
       return $count;
    }
    
    protected function _increment(int $amount = 1): void
    { 
-       if (apcu_exists($this->capkey)) {
-           $current = $this->_writeCount();
-           if (! apcu_store($this->wckey, $current+$amount))
-               println('failed to write inc');
-       }
+      if (apcu_exists($this->capkey)) {
+          $current = $this->_writeCount();
+          if (!apcu_store($this->wckey, $current+$amount))
+              println('failed to write inc');
+      }
    }
    
    protected function _hitCapcity(): bool
    {
        if (apcu_exists($this->capkey)) {
-           $v = apcu_fetch($this->capkey, $ok);
-           if ($ok) {
-               return $this->_writeCount() >= $v;
-           }
+          $v = apcu_fetch($this->capkey, $ok);
+          if ($ok) {
+              return $this->_writeCount() >= $v;
+          }
        }
        return false;
    }
@@ -129,7 +129,7 @@ class BufferedChannel implements \IteratorAggregate
    public function close(): self
    {
        if ($this->open)
-           $this->set(self::CHAN_SIG_CLOSE);
+          $this->set(self::CHAN_SIG_CLOSE);
        
        return $this;
    }
@@ -146,7 +146,7 @@ class BufferedChannel implements \IteratorAggregate
            - Release lock.
        */
        $written = false;
-       while (! $written)
+       while (!$written)
        {
            $this->_synchronised(function() use ($value, &$written) {
                $data = apcu_exists($this->key) ? apcu_fetch($this->key) : [];
@@ -194,7 +194,7 @@ class BufferedChannel implements \IteratorAggregate
            - Release lock.
        */
        $written = false;
-       while (! $written)
+       while (!$written)
        {
            $this->_synchronised(function() use ($values, &$written) {
                $data = apcu_exists($this->key) ? apcu_fetch($this->key) : [];
@@ -206,7 +206,7 @@ class BufferedChannel implements \IteratorAggregate
                }
                    
            });
-           if (! $written)
+           if (!$written)
                usleep(TASK_WAIT_TIME); 
        }
        
@@ -234,7 +234,7 @@ class BufferedChannel implements \IteratorAggregate
     */
     public function get(int|bool $wait = true): mixed
     {
-		if (! $this->open) 
+		if (!$this->open) 
 		    return CHAN_CLOSED;
 		
 		$value = null;
@@ -242,7 +242,7 @@ class BufferedChannel implements \IteratorAggregate
         $waitTimeout = 0; 
         if (is_int($wait)) {
             if ($wait < 0)
-                throw new \Exception("Supplied integer for parameter $wait was less than 0.");
+               throw new \Exception("Supplied integer for parameter $wait was less than 0.");
             
             $waitTimeout = $wait;
             $wait = true;
@@ -256,7 +256,7 @@ class BufferedChannel implements \IteratorAggregate
             - Release lock
         */
         $read = false;
-        while (! $read)
+        while (!$read)
         {
             if ($waitTimeout > 0 and time()-$started >= $waitTimeout)
                 break;
@@ -276,9 +276,9 @@ class BufferedChannel implements \IteratorAggregate
                     }
                 });
             }
-            if (! $wait)
+            if (!$wait)
                 $read = true;
-            if (! $read)
+            if (!$read)
                 usleep(TASK_WAIT_TIME); 
         }
         
@@ -298,7 +298,7 @@ class BufferedChannel implements \IteratorAggregate
 		return $this->get($wait);
 	}
     
-    /**
+   /**
     * Obtain all values currently residing on the queue (if any). If $wait is TRUE then
     * this method will block until a new value is received. Be aware that
     * in this mode the method will block forever if no further values
@@ -313,82 +313,82 @@ class BufferedChannel implements \IteratorAggregate
     * 
     * @return array<mixed> The next available value, NULL if none was available or a wait timeout was reached. If the channel was closed then the constant CHAN_CLOSED is returned.
     */
-    public function get_all(int|bool $wait = true) : array|string|null
-    {
-		if (! $this->open)
-			return CHAN_CLOSED;
+   public function get_all(int|bool $wait = true) : array|string|null
+   {
+	   if (! $this->open)
+		   return CHAN_CLOSED;
 		
-		$values = null;
-        $started = time();
-        $waitTimeout = 0; 
-        if (is_int($wait)) 
-        {
-            if ($wait < 0)
-                throw new \Exception("Supplied integer for parameter $wait was less than 0.");
-            
-            $waitTimeout = $wait;
-            $wait = true;
-        }
+      $values = null;
+      $started = time();
+      $waitTimeout = 0; 
+      if (is_int($wait)) 
+      {
+          if ($wait < 0)
+              throw new \Exception("Supplied integer for parameter $wait was less than 0.");
+          
+          $waitTimeout = $wait;
+          $wait = true;
+      }
+      
+      /*
+          - Wait until data is present.
+          - Aquire lock.
+          - Read data, as long as someone else has not snuck in a got it since we got the lock.
+          - Delete value
+          - Release lock
+      */
+      $read = false;
+      while (! $read)
+      {
+         if ($waitTimeout > 0 and time()-$started >= $waitTimeout)
+             break;
+         
+         if (apcu_exists($this->key))
+         {
+             $this->_synchronised(function() use (&$values, &$read) {
+                 if (apcu_exists($this->key)) { 
+                     $values = apcu_fetch($this->key); 
+                     $read = true; 
+                     apcu_delete($this->key); 
+                     if (is_array($values) && arrays::last($values) == self::CHAN_SIG_CLOSE) {
+                         array_pop($values);
+                         $this->open = false;
+                         // re-insert close sig so other listeners can pick it up.
+                         apcu_store($this->key, [self::CHAN_SIG_CLOSE]);
+                     }
+                 }
+             });
+         }
+         if (! $wait)
+             $read = true;
+         if (! $read)
+             usleep(TASK_WAIT_TIME); 
+      }
         
-        /*
-            - Wait until data is present.
-            - Aquire lock.
-            - Read data, as long as someone else has not snuck in a got it since we got the lock.
-            - Delete value
-            - Release lock
-        */
-        $read = false;
-        while (! $read)
-        {
-            if ($waitTimeout > 0 and time()-$started >= $waitTimeout)
-                break;
-            
-            if (apcu_exists($this->key))
-            {
-                $this->_synchronised(function() use (&$values, &$read) {
-                    if (apcu_exists($this->key)) { 
-                        $values = apcu_fetch($this->key); 
-                        $read = true; 
-                        apcu_delete($this->key); 
-                        if (is_array($values) && arrays::last($values) == self::CHAN_SIG_CLOSE) {
-                            array_pop($values);
-                            $this->open = false;
-                            // re-insert close sig so other listeners can pick it up.
-                            apcu_store($this->key, [self::CHAN_SIG_CLOSE]);
-                        }
-                    }
-                });
-            }
-            if (! $wait)
-                $read = true;
-            if (! $read)
-                usleep(TASK_WAIT_TIME); 
-        }
-        
-        return $values;
-    }
+      return $values;
+   }
     
-    /**
-     * Yield the channel out to an iterator loop until the point at which it is closed off. If you 
-     * wish to put your task into an infinite scanning loop for the lifetime of the channel, 
-     * for example to process all incoming data, then this can provide a more simplistic model for
-     * doing so.
-     * 
-     * -- parameters:
-     * @param int|bool $wait If TRUE then block indefinitely until a new value is available. If FALSE then return immediately if there is nothing available. If a number is passed then wait the given number of seconds before giving up. Passing 0 is equivalent to passing TRUE. Passing a negative number will throw an exception.
-     */
-    public function incoming(int|bool $wait = true): \Generator
-    {
-        while (($value = $this->get($wait)) !== CHAN_CLOSED) {
-            yield $value;
-        }
-    }
+   /**
+    * Yield the channel out to an iterator loop until the point at which it is closed off. If you 
+    * wish to put your task into an infinite scanning loop for the lifetime of the channel, 
+    * for example to process all incoming data, then this can provide a more simplistic model for
+    * doing so.
+    * 
+    * -- parameters:
+    * @param int|bool $wait If TRUE then block indefinitely until a new value is available. If FALSE then return immediately if there is nothing available. If a number is passed then wait the given number of seconds before giving up. Passing 0 is equivalent to passing TRUE. Passing a negative number will throw an exception.
+    */
+   public function incoming(int|bool $wait = true): \Generator
+   {
+      while (($value = $this->get($wait)) !== CHAN_CLOSED) {
+         yield $value;
+      }
+   }
     
     /**
      * Use the channel object as an iterator for incoming values, looping until it is closed off. This method 
      * has the same effect as calling BufferedChannel::incoming() with the default parameter of TRUE for the $wait parameter.
      */
-    public function getIterator(): \Traversable {
-        return $this->incoming();
-    }
+   public function getIterator(): \Traversable {
+      return $this->incoming();
+   }
 }

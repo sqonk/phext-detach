@@ -52,7 +52,7 @@ class Dispatcher
         self::cleanup(); // remove any completed threads from the register. 
         
         $t = new Task($callback);
-		self::$threads[] = $t; // add to the internal register to prevent GC.    
+	     self::$threads[] = $t; // add to the internal register to prevent GC.    
         $t->start($args);   
         return $t;
     }
@@ -74,7 +74,7 @@ class Dispatcher
      * @see TaskMap class for more options.
      * @see TaskMap::start() for information on what is returned.
      */
-    static public function map(iterable $data, callable $callback, ?array $params = null, bool $block = true, ?int $limit = null): array|BufferedChannel
+    static public function map(iterable $data, callable $callback, ?array $params = null, bool $block = true, ?int $limit = null) : array|BufferedChannel
     {
         $map = new TaskMap($data, $callback);
         if ($params)
@@ -120,19 +120,19 @@ class Dispatcher
      */
     static public function wait(Task|array|null $tasks = null): mixed
     {
-		if (! $tasks) {
-		    self::cleanup();
-            $tasks = self::$threads;
+		if (!$tasks) {
+		   self::cleanup();
+         $tasks = self::$threads;
 		}
         
-        if (is_array($tasks) && count($tasks) == 0)
-            return null;
+      if (is_array($tasks) && count($tasks) == 0)
+         return null;
         
-        if (is_array($tasks) && count($tasks) == 1)
-            $tasks = $tasks[0];
+      if (is_array($tasks) && count($tasks) == 1)
+         $tasks = $tasks[0];
 		
-        if ($tasks instanceof Task)
-		{
+      if ($tasks instanceof Task)
+		{ 
             while (! $tasks->complete())
                 usleep(TASK_WAIT_TIME);
 			return $tasks->result();
@@ -164,7 +164,7 @@ class Dispatcher
      * 
      * @return mixed The result of the first task in the array to finish.
      */
-	static public function wait_any(?array $tasks = null): mixed
+	static public function wait_any(?array $tasks = null) : mixed
 	{
 		if (! $tasks) {
 		    self::cleanup();
