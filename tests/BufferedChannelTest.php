@@ -3,11 +3,11 @@ declare(strict_types=1);
 /**
 *
 * Threading
-* 
+*
 * @package		phext
 * @subpackage	detach
 * @version		1
-* 
+*
 * @license		MIT see license.txt
 * @copyright	2019 Sqonk Pty Ltd.
 *
@@ -19,160 +19,167 @@ declare(strict_types=1);
 */
 
 use PHPUnit\Framework\TestCase;
-use sqonk\phext\detach\{BufferedChannel,Dispatcher,TaskMap};
+use sqonk\phext\detach\BufferedChannel;
+use sqonk\phext\detach\Dispatcher;
+use sqonk\phext\detach\TaskMap;
 
 class BufferedChannelTest extends TestCase
 {
-    /**
-     * @small
-     */
-    public function testMappedPoolRollingValues()
-    {
-        $input = range(1, 100);
+  /**
+   * @small
+   */
+  public function testMappedPoolRollingValues()
+  {
+    $input = range(1, 100);
         
-        // generate seperate tasks, all of which return a number.
-        $chan = new BufferedChannel(capacity:count($input)); // we'll be waiting on a maximum of 10 inputs.
+    // generate seperate tasks, all of which return a number.
+    $chan = new BufferedChannel(capacity:count($input)); // we'll be waiting on a maximum of 10 inputs.
 
-        $cb = function($i, $chan) {
-            usleep(rand(100, 1000));
+    $cb = function ($i, $chan) {
+      usleep(rand(100, 1000));
     
-            $chan->put($i);
-        };
+      $chan->put($i);
+    };
         
-        $map = new TaskMap($input, $cb);
-        $map->block(false)->limit(3)->params($chan)->start();
+    $map = new TaskMap($input, $cb);
+    $map->block(false)->limit(3)->params($chan)->start();
 
-        // wait for all tasks to complete and then print each result.	
-        $tally = 0;
-        while (($r = $chan->get()) != CHAN_CLOSED) {
-            $tally++;
-        }
-        
-        $this->assertSame(count($input), $tally);
-        
-        detach_kill();
+    // wait for all tasks to complete and then print each result.
+    $tally = 0;
+    while (($r = $chan->get()) != CHAN_CLOSED) {
+      $tally++;
     }
+        
+    $this->assertSame(count($input), $tally);
+        
+    detach_kill();
+  }
     
-    /**
-     * @medium
-     */
-    public function testWait()
-    {
-        $func = function($chan) {
-            sleep(1);
-            $chan->put(3);
-        };
-        $chan = new BufferedChannel;
+  /**
+   * @medium
+   */
+  public function testWait()
+  {
+    $func = function ($chan) {
+      sleep(1);
+      $chan->put(3);
+    };
+    $chan = new BufferedChannel;
         
-        detach($func, [$chan]);
+    detach($func, [$chan]);
         
-        $this->assertSame(3, $chan->get(2));
+    $this->assertSame(3, $chan->get(2));
         
-        detach_kill();
-    }
+    detach_kill();
+  }
     
-    /**
-     * @medium
-     */
-    public function testWaitTimeout()
-    {
-        $func = function($chan) {
-            sleep(2);
-            $chan->put(3);
-        };
-        $chan = new BufferedChannel;
+  /**
+   * @medium
+   */
+  public function testWaitTimeout()
+  {
+    $func = function ($chan) {
+      sleep(2);
+      $chan->put(3);
+    };
+    $chan = new BufferedChannel;
         
-        detach($func, [$chan]);
+    detach($func, [$chan]);
         
-        $this->assertSame(null, $chan->get(1));
+    $this->assertSame(null, $chan->get(1));
         
-        detach_kill();
-    }
+    detach_kill();
+  }
     
-    /**
-     * @small
-     */
-    public function testClose()
-    {
-        $cannon = function($chan) {
-            foreach (range(1, 5) as $i)
-                $chan->put($i);
-            $chan->close();
-        };
+  /**
+   * @small
+   */
+  public function testClose()
+  {
+    $cannon = function ($chan) {
+      foreach (range(1, 5) as $i) {
+        $chan->put($i);
+      }
+      $chan->close();
+    };
         
-        $expected = range(1, 5);
-        $chan = new BufferedChannel;
-        detach($cannon, [$chan]);
+    $expected = range(1, 5);
+    $chan = new BufferedChannel;
+    detach($cannon, [$chan]);
         
-        while (($r = $chan->next()) != CHAN_CLOSED)
-            $this->assertSame($r, array_shift($expected));
-        
-        detach_kill();
+    while (($r = $chan->next()) != CHAN_CLOSED) {
+      $this->assertSame($r, array_shift($expected));
     }
+        
+    detach_kill();
+  }
     
-    /**
-     * @small
-     */
-    public function testBulkSet()
-    {
-        $inputs = [1,2,3];
-        $chan = new BufferedChannel;
-        detach(function($chan, $inputs) {
-            $chan->bulk_set($inputs);
-            $chan->close();
-        }, [$chan, $inputs]);
+  /**
+   * @small
+   */
+  public function testBulkSet()
+  {
+    $inputs = [1,2,3];
+    $chan = new BufferedChannel;
+    detach(function ($chan, $inputs) {
+      $chan->bulk_set($inputs);
+      $chan->close();
+    }, [$chan, $inputs]);
         
-        while (($r = $chan->get()) !== CHAN_CLOSED)
-            $this->assertSame($r, array_shift($inputs));
+    while (($r = $chan->get()) !== CHAN_CLOSED) {
+      $this->assertSame($r, array_shift($inputs));
     }
+  }
     
-    /**
-     * @small
-     */
-    public function testGetAll()
-    {
-        $inputs = range(1,9);
-        $chan = new BufferedChannel;
+  /**
+   * @small
+   */
+  public function testGetAll()
+  {
+    $inputs = range(1, 9);
+    $chan = new BufferedChannel;
         
-        detach(function($chan, $inputs) {
-            foreach ($inputs as $v)
-                $chan->put($v);
-            $chan->close();
-        }, [$chan, $inputs]);
+    detach(function ($chan, $inputs) {
+      foreach ($inputs as $v) {
+        $chan->put($v);
+      }
+      $chan->close();
+    }, [$chan, $inputs]);
         
-        detach_wait();
-        $results = $chan->get_all();
-        $this->assertSame($inputs, $results);
+    detach_wait();
+    $results = $chan->get_all();
+    $this->assertSame($inputs, $results);
         
-        detach_kill();
-    }
+    detach_kill();
+  }
     
-    /**
-     * @small
-     */
-    public function testGenerator()
-    {
-        $func = function($values, $out) { 
-            foreach ($values as $v)
-                $out->put($v ** 2);
-            $out->close();
-        };
-        $in = [1,2,3,4];
-        $out = [1,4,9,16];
-        $chan = new BufferedChannel;
+  /**
+   * @small
+   */
+  public function testGenerator()
+  {
+    $func = function ($values, $out) {
+      foreach ($values as $v) {
+        $out->put($v ** 2);
+      }
+      $out->close();
+    };
+    $in = [1,2,3,4];
+    $out = [1,4,9,16];
+    $chan = new BufferedChannel;
         
-        detach ($func, [$in, $chan]);
+    detach($func, [$in, $chan]);
         
-        foreach ($chan->incoming(1) as $i => $v) {
-            $this->assertSame($out[$i], $v);
-        }
-        
-        $chan = new BufferedChannel;
-        detach ($func, [$in, $chan]);
-        foreach ($chan as $i => $v) {
-            $this->assertSame($out[$i], $v);
-        }
-        
-        detach_kill();
+    foreach ($chan->incoming(1) as $i => $v) {
+      $this->assertSame($out[$i], $v);
     }
+        
+    $chan = new BufferedChannel;
+    detach($func, [$in, $chan]);
+    foreach ($chan as $i => $v) {
+      $this->assertSame($out[$i], $v);
+    }
+        
+    detach_kill();
+  }
 }

@@ -2,11 +2,11 @@
 /**
 *
 * Threading
-* 
+*
 * @package		phext
 * @subpackage	detach
 * @version		1
-* 
+*
 * @license		MIT see license.txt
 * @copyright	2019 Sqonk Pty Ltd.
 *
@@ -21,14 +21,15 @@ require '../vendor/autoload.php';
 
 // Demonstrate a task sub-process running in parallel to the main script.
 
-$task = detach (function() {
-    foreach (range(1, 10) as $i)
-        print " $i ";
+$task = detach(function () {
+  foreach (range(1, 10) as $i) {
+    print " $i ";
+  }
 });
 
 println('waiting');
 while (! $task->complete()) {
-    print '.';
+  print '.';
 }
-    
+
 println("\n", 'done');

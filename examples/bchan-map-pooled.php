@@ -2,11 +2,11 @@
 /**
 *
 * Threading
-* 
+*
 * @package		phext
 * @subpackage	detach
 * @version		1
-* 
+*
 * @license		MIT see license.txt
 * @copyright	2019 Sqonk Pty Ltd.
 *
@@ -29,10 +29,11 @@ use sqonk\phext\detach\BufferedChannel;
     a concurrent pool limit, allowing only a set number of tasks to run
     simulatenously.
 */
-function gen($i, $chan) {
-    println('run', $i);
+function gen($i, $chan)
+{
+  println('run', $i);
     
-    $chan->put($i);
+  $chan->put($i);
 };
 
 
@@ -45,11 +46,11 @@ $chan->capacity(count($input)); // we'll be waiting on a maximum of 10 inputs.
 $tm = new TaskMap($input, 'gen');
 $tm->block(false)->limit(3)->params($chan)->start();
 
-// wait for all tasks to complete and then print each result.	
+// wait for all tasks to complete and then print each result.
 $tally = 0;
 while (($r = $chan->get()) !== CHAN_CLOSED) {
-    $tally++;
-    println("##RESULT: $r", 'tally', $tally);
+  $tally++;
+  println("##RESULT: $r", 'tally', $tally);
 }
 
 println('---done');

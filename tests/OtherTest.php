@@ -3,11 +3,11 @@ declare(strict_types=1);
 /**
 *
 * Threading
-* 
+*
 * @package		phext
 * @subpackage	detach
 * @version		1
-* 
+*
 * @license		MIT see license.txt
 * @copyright	2019 Sqonk Pty Ltd.
 *
@@ -19,41 +19,44 @@ declare(strict_types=1);
 */
 
 use PHPUnit\Framework\TestCase;
-use sqonk\phext\detach\{BufferedChannel,Channel};
+use sqonk\phext\detach\BufferedChannel;
+use sqonk\phext\detach\Channel;
 
 class OtherTest extends TestCase
 {
-    /**
-     * @medium
-     */
-    public function testChannelSelect()
-    {
-        $fun = function(array $channels) {
-            foreach (range(1, 6) as $i) {
-                $ci = $i > 3 ? $i - 4 : $i - 1;
-                $channels[$ci]->put($i);
-            }
-            $channels[0]->close();
-        };
+  /**
+   * @medium
+   */
+  public function testChannelSelect()
+  {
+    $fun = function (array $channels) {
+      foreach (range(1, 6) as $i) {
+        $ci = $i > 3 ? $i - 4 : $i - 1;
+        $channels[$ci]->put($i);
+      }
+      $channels[0]->close();
+    };
         
-        $channels = [new Channel, new Channel, new BufferedChannel];
-        detach ($fun, [$channels]);
+    $channels = [new Channel, new Channel, new BufferedChannel];
+    detach($fun, [$channels]);
         
-        while (true) {
-            [$val, $chan] = channel_select(...$channels);
-            if ($val == CHAN_CLOSED)
-                break;
+    while (true) {
+      [$val, $chan] = channel_select(...$channels);
+      if ($val == CHAN_CLOSED) {
+        break;
+      }
             
-            if (contains([1,4], $val))
-                $this->assertSame($channels[0], $chan);
-            else if (contains([2,5], $val))
-                $this->assertSame($channels[1], $chan);
-            else if (contains([3,6], $val))
-                $this->assertSame($channels[2], $chan);
-            else
-                throw new Exception('unknown value');
-        }
-        
-        detach_kill();
+      if (contains([1,4], $val)) {
+        $this->assertSame($channels[0], $chan);
+      } elseif (contains([2,5], $val)) {
+        $this->assertSame($channels[1], $chan);
+      } elseif (contains([3,6], $val)) {
+        $this->assertSame($channels[2], $chan);
+      } else {
+        throw new Exception('unknown value');
+      }
     }
+        
+    detach_kill();
+  }
 }

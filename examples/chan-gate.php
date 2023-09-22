@@ -2,11 +2,11 @@
 /**
 *
 * Threading
-* 
+*
 * @package		phext
 * @subpackage	detach
 * @version		1
-* 
+*
 * @license		MIT see license.txt
 * @copyright	2019 Sqonk Pty Ltd.
 *
@@ -21,10 +21,11 @@ require '../vendor/autoload.php';
 use sqonk\phext\detach\Channel;
 
 /*
-	Runs on sub-process 1. 
-	Take the integer passed into it, increment, then output the value to the channel which sub-process 2 is waiting on.
+    Runs on sub-process 1.
+    Take the integer passed into it, increment, then output the value to the channel which sub-process 2 is waiting on.
 */
-function addOne($out, $i) {
+function addOne($out, $i)
+{
   println('adding 1');
   $i++;
   $out->set($i);
@@ -36,7 +37,8 @@ function addOne($out, $i) {
   - Waits for data on the input channel (provided by sub-process 1).
   - Once received, multiplies the result by 10 then outputs the result to the second channel, which the main process is waiting on.
 */
-function mul10($in, $out) {
+function mul10($in, $out)
+{
   $i = $in->get();
   println('multiplying 10');
   $i *= 10;
@@ -47,8 +49,8 @@ $chan1 = new Channel;
 $chan2 = new Channel;
 
 // Spin up both tasks.
-detach ('addOne', [$chan1, 9]);
-detach ('mul10', [$chan1, $chan2]);
+detach('addOne', [$chan1, 9]);
+detach('mul10', [$chan1, $chan2]);
 
 // wait for the final result that is output to the second channel, then print it.
 println($chan2->get());

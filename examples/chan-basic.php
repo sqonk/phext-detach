@@ -2,11 +2,11 @@
 /**
 *
 * Threading
-* 
+*
 * @package		phext
 * @subpackage	detach
 * @version		1
-* 
+*
 * @license		MIT see license.txt
 * @copyright	2019 Sqonk Pty Ltd.
 *
@@ -27,18 +27,18 @@ use sqonk\phext\detach\Channel;
 
 function gen($chan)
 {
-    foreach (range(1, 10) as $i) {
-        println("in $i");
-        $chan->put($i);
-    }
-    $chan->close();
+  foreach (range(1, 10) as $i) {
+    println("in $i");
+    $chan->put($i);
+  }
+  $chan->close();
 }
 
 $input = range(1, 10);
 
 $chan = new Channel;
-detach ('gen', [$chan]);
+detach('gen', [$chan]);
 
-while (($r = $chan->next()) !== CHAN_CLOSED) { 
-    println("out $r");
+while (($r = $chan->next()) !== CHAN_CLOSED) {
+  println("out $r");
 }
