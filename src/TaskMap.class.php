@@ -37,9 +37,9 @@ class TaskMap
   protected bool $block = true;
     
   /**
-   * @var array<mixed>
+   * @var list<mixed>|BufferedChannel
    */
-  protected array $data;
+  protected array|BufferedChannel $data;
     
   /**
    * @var callable $callback
@@ -51,10 +51,10 @@ class TaskMap
    * to a seperate task(s).
    *
    * -- parameters:
-   * @param array<mixed> $data The array of items to distribution across the seperate running tasks.
+   * @param list<mixed>|BufferedChannel $data The items to distribute across the seperate tasks.
    * @param callable $callback The callback method that will receive each item in $data when executed.
    */
-  public function __construct(array $data, callable $callback)
+  public function __construct(array|BufferedChannel $data, callable $callback)
   {
     $this->data = $data;
     $this->callback = $callback;
@@ -100,12 +100,18 @@ class TaskMap
     
   protected function _runPool(): mixed
   {
-    // migrate the data to process over to a buffered channel that will feed the tasks.
-    $chan = new BufferedChannel;
-    $chan->bulk_set($this->data)->close();
-       
     $outBuffer = new BufferedChannel;
-    $outBuffer->capacity(count($this->data));
+    
+    if (is_array($this->data)) {
+      // migrate the data to process over to a buffered channel that will feed the tasks.
+      $chan = new BufferedChannel;
+      $chan->bulk_set($this->data)->close();
+      
+      $outBuffer->capacity(count($this->data));
+    } else {
+      $chan = $this->data;
+    }
+
        
     $tasks = [];
     foreach (range(1, $this->limit) as $i) {

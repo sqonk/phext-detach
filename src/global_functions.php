@@ -52,7 +52,7 @@ function detach(callable $callback, array $args = []): Task
  * This method creates a new task map and immediately starts it.
  *
  * -- parameters:
- * @param iterable<mixed> $data The array of items to be spread over seperate tasks.
+ * @param list<mixed>|BufferedChannel $data The items to distribute across the seperate tasks.
  * @param callable $callback The callback method that will receive each item on the seperate task.
  * @param ?array<mixed> $params An optional array of additional [constant] parameters that will be passed to the callback.
  * @param bool $block Whether the main program will block execution until all tasks have completed.
@@ -62,8 +62,13 @@ function detach(callable $callback, array $args = []): Task
  * @see TaskMap class for more options.
  * @see TaskMap::start() for information on what is returned.
  */
-function detach_map(iterable $data, callable $callback, ?array $params = null, bool $block = true, ?int $limit = null): array|BufferedChannel
-{
+function detach_map(
+  array|BufferedChannel $data, 
+  callable $callback, 
+  ?array $params = null, 
+  bool $block = true, 
+  ?int $limit = null
+): array|BufferedChannel {
   return Dispatcher::map($data, $callback, $params, $block, $limit);
 }
 
