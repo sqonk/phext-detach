@@ -38,6 +38,7 @@ class BufferedChannel implements \IteratorAggregate
   protected string $key;
   protected string $wckey;
   protected string $capkey;
+  protected string $closekey;
   protected string $createdOnPID;
     
   private const CHAN_SIG_CLOSE = "#__CHAN-CLOSE__#";
@@ -50,6 +51,7 @@ class BufferedChannel implements \IteratorAggregate
     $this->key = 'BCHAN-'.uniqid();
     $this->wckey = "$this->key.wc";
     $this->capkey = "$this->key.cap";
+    $this->closekey = "$this->key.close";
     $this->createdOnPID = detach_pid();
       
     if ($capacity) {
@@ -136,6 +138,19 @@ class BufferedChannel implements \IteratorAggregate
     }
        
     return $this;
+  }
+  
+  /**
+   * Is the channel still open?
+   * 
+   * @return bool TRUE if the channel is open, FALSE if not.
+   */
+  public function is_open(): bool 
+  {
+    if ($this->open) {
+      $this->open = !apcu_fetch($this->closekey);
+    }
+    return $this->open;
   }
     
   /**
@@ -292,6 +307,7 @@ class BufferedChannel implements \IteratorAggregate
     if ($value == self::CHAN_SIG_CLOSE) {
       $value = CHAN_CLOSED;
       $this->open = false;
+      apcu_store($this->closekey, true);
     }
         
     return $value;
