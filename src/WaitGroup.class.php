@@ -69,7 +69,7 @@ final class WaitGroup
   }
   
   /**
-   * Mark the current task as complete. Each task may only call done once on any single group.
+   * Mark the current task as complete. Each task may only call this method once on any single group.
    */
   public function done(): void 
   {

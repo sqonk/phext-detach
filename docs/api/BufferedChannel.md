@@ -13,6 +13,7 @@ BufferedChannels are an effective bottle-necking system where data obtained from
 - [__destruct](#__destruct)
 - [capacity](#capacity)
 - [close](#close)
+- [is_open](#is_open)
 - [set](#set)
 - [put](#put)
 - [bulk_set](#bulk_set)
@@ -54,6 +55,16 @@ Every time this method is called it will reset the write count to 0.
 public function close() : self
 ```
 Close off the channel, signalling to the receiver that no further values will be sent.
+
+
+------
+##### is_open
+```php
+public function is_open() : bool
+```
+Is the channel still open?
+
+**Returns:**  bool `TRUE` if the channel is open, `FALSE` if not.
 
 
 ------

@@ -78,6 +78,7 @@ class TaskMap
    * Provide a series of auxiliary parameters that are provided to the callback
    * in addition to the main element passed in.
    *
+   * -- parameters:
    * @param list<mixed> ...$args
    */
   public function params(mixed ...$args): self

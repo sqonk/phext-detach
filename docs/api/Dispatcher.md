@@ -30,13 +30,13 @@ It is useful for environments that need to run a block of code in parallel.
 ------
 ##### map
 ```php
-static public function map(iterable $data, callable $callback, array $params = null, bool $block = true, int $limit = null) : sqonk\phext\detach\BufferedChannel|array
+static public function map(sqonk\phext\detach\BufferedChannel|array $data, callable $callback, array $params = null, bool $block = true, int $limit = null) : sqonk\phext\detach\BufferedChannel|array
 ```
 Map an array of items to be processed each on a seperate task. The receiving callback function should take at least one parameter.
 
 This method creates a new task map and immediately starts it.
 
-- **iterable<mixed>** $data The array of items to be spread over seperate tasks.
+- **list<mixed>|BufferedChannel** $data The items to distribute across the seperate tasks.
 - **callable** $callback The callback method that will receive each item on the seperate task.
 - **?array<mixed>** $params An optional array of additional [constant] parameters that will be passed to the callback.
 - **bool** $block Whether the main program will block execution until all tasks have completed.

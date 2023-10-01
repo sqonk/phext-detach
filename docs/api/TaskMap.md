@@ -12,11 +12,11 @@ The TaskMap class maps an array of elements each unto their own seperate task.
 ------
 ##### __construct
 ```php
-public function __construct(array $data, callable $callback) 
+public function __construct(sqonk\phext\detach\BufferedChannel|array $data, callable $callback) 
 ```
 Construct a new map with the provided array of items for distribution to a seperate task(s).
 
-- **array<mixed>** $data The array of items to distribution across the seperate running tasks.
+- **list<mixed>|BufferedChannel** $data The items to distribute across the seperate tasks.
 - **callable** $callback The callback method that will receive each item in $data when executed.
 
 
@@ -37,7 +37,7 @@ public function params(mixed ...$args) : self
 ```
 Provide a series of auxiliary parameters that are provided to the callback in addition to the main element passed in.
 
-@param list<mixed> ...$args
+- **list<mixed>** ...$args
 
 
 ------
