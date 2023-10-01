@@ -23,9 +23,9 @@ namespace sqonk\phext\detach;
  * A WaitGroup provides an alternative mechanism for synchronising the completion of a 
  * subset of tasks. 
  * 
- * Each task should take a reference to the group and call the method done() upon completion.
+ * Each task should take a reference to the group and call the method `done()` upon completion.
  * 
- * Like detach_wait($myTasks), calling wait() on the group will block the current process until
+ * Like `detach_wait($myTasks),` calling `wait()` on the group will block the current process until
  * all members of the group have completed.
  * 
  * In addition to this a WaitGroup can also be probed manually without blocking, allowing you to
@@ -39,8 +39,9 @@ final class WaitGroup
   /**
    * Create a new WaitGroup of the given size.
    * 
+   * -- parameters:
    * @param int $size 
-   * The amount of times done() must be called upon the group before it is flagged as complete.
+   * The amount of times `done()` must be called upon the group before it is flagged as complete.
    */
   public function __construct(private readonly int $size) 
   {
@@ -90,10 +91,10 @@ final class WaitGroup
   }
   
   /**
-   * A group is considered complete when done() has been called at least as many times the size of 
+   * A group is considered complete when `done()` has been called at least as many times the size of 
    * the group (set at the point of the creation).
    * 
-   * @return bool TRUE if grouped is completed, FALSE if not.
+   * @return bool TRUE if the WaitGroup is considered to be complete, FALSE if not.
    */
   public function complete(): bool 
   {
@@ -106,7 +107,7 @@ final class WaitGroup
   
   /**
    * Block the current task until all tasks that are part of this group have signalled their
-   * completion by calling done().
+   * completion by calling `done()`.
    */
   public function wait(): void 
   {
