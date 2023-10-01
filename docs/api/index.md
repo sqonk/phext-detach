@@ -22,7 +22,9 @@ The Dispatch class acts as a static interface to the various classes of the deta
 
 The TaskMap class maps an array of elements each unto their own seperate task.
 
+[WaitGroup](WaitGroup.md)
 
+A WaitGroup provides an alternative mechanism for synchronising the completion of a subset of tasks. 
 
 [Channel](Channel.md)
 
