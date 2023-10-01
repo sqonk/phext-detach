@@ -103,7 +103,7 @@ class TaskMap
     $outBuffer = new BufferedChannel;
     
     if (is_array($this->data)) {
-      // migrate the data to process over to a buffered channel that will feed the tasks.
+      // migrate the data over to a buffered channel that will feed the tasks.
       $chan = new BufferedChannel;
       $chan->bulk_set($this->data)->close();
       
@@ -111,12 +111,13 @@ class TaskMap
     } else {
       $chan = $this->data;
     }
-
+    
+    $wg = !$this->block ? new WaitGroup($this->limit) : null;    
        
     $tasks = [];
     foreach (range(1, $this->limit) as $i) {
       $tasks[] = Dispatcher::detach(
-        function ($feed, $out) {
+        function (BufferedChannel $feed, BufferedChannel $out) use ($wg) {
           while (($item = $feed->next()) !== CHAN_CLOSED) {
             $params = is_array($item) ? $item : [$item];
             if ($this->params) {
@@ -125,6 +126,12 @@ class TaskMap
        
             $r = ($this->callback)(...$params);
             $out->put($r);
+          }
+          if (!$this->block) {
+            $wg->done();
+            if ($wg->complete()) {
+              $out->close();
+            }
           }
         },
         [$chan, $outBuffer]
