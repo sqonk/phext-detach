@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 use sqonk\phext\detach\TaskMap;
+use sqonk\phext\detach\BufferedChannel;
 
 class TaskMapTest extends TestCase
 {
@@ -132,4 +133,38 @@ class TaskMapTest extends TestCase
   {
     $this->runMap(10, false, 3);
   }
+  
+  /**
+   * @medium
+   */
+  public function testNonBlockingWithBufferedChannelInput(): void 
+  {
+    $input = [1 => 1, 5 => 5, 10 => 55, 19 => 4181, 20 => 6765, 30 => 832040];
+    $chan = new BufferedChannel;
+
+    detach (function() use ($chan, $input) {
+      foreach (array_keys($input) as $i) {
+        $chan->put($i);
+        usleep(100);
+      }
+      $chan->close();
+    });
+
+
+    $results = detach_map(data:$chan, block:false, limit:3, callback:function(int $n): array {  
+      return [$n, fib($n)];
+    });
+
+    foreach ($results as [$n, $f]) {
+      $this->assertSame(expected:$input[$n], actual:$f);
+    }
+    
+    detach_kill();
+  }
+}
+
+function fib(int $n): int {
+    if ($n <= 1) 
+        return $n; 
+    return fib($n - 1) + fib($n - 2);
 }
