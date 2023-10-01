@@ -33,7 +33,7 @@ class TaskTest extends TestCase
       return 100;
     });
     $r = detach_wait();
-    $this->assertEquals(100, $r);
+    $this->assertEquals(expected:100, actual:$r);
         
     detach_kill();
   }
