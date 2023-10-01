@@ -30,7 +30,7 @@ It is useful for environnments that need to run a block of code in parallel.
 ------
 ##### detach_map
 ```php
-function detach_map(iterable $data, callable $callback, array $params = null, bool $block = true, int $limit = null) : sqonk\phext\detach\BufferedChannel|array
+function detach_map(sqonk\phext\detach\BufferedChannel|array $data, callable $callback, array $params = null, bool $block = true, int $limit = null) : sqonk\phext\detach\BufferedChannel|array
 ```
 Map an array of items to be processed each on a seperate task. The receiving callback function should take at least one parameter. This method is an alias for `Dispatcher::map`.
 
