@@ -5,25 +5,26 @@
     "require": {
 		"php": "^8",
 		"ext-pcntl": "*",
-        "ext-posix": "*",
-        "ext-apcu": "*",
-        "sqonk/phext-core": "^1.1"
+    "ext-posix": "*",
+    "ext-apcu": "*",
+    "sqonk/phext-core": "^1.1"
     },
 	"keywords": ["pcntl","parallel","multitasking","multi-tasking","concurrency", "concurrent"],
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Theo Howell",
-            "email": "sqonk@sqonk.com.au"
-        }
-    ],
+  "license": "MIT",
+  "authors": [
+      {
+          "name": "Theo Howell",
+          "email": "sqonk@sqonk.com.au"
+      }
+  ],
 	"autoload": {
 		"files": [
 			"src/Task.class.php", 
-            "src/TaskMap.class.php", 
+      "src/TaskMap.class.php", 
 			"src/Dispatcher.class.php", 
+      "src/WaitGroup.class.php", 
 			"src/Channel.class.php", 
-            "src/BufferedChannel.class.php", 
+      "src/BufferedChannel.class.php", 
 			"src/global_functions.php"
 		]
     },

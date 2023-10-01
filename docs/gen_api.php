@@ -8,6 +8,7 @@ use sqonk\phext\detach\BufferedChannel;
 use sqonk\phext\detach\Dispatcher;
 use sqonk\phext\detach\Task;
 use sqonk\phext\detach\TaskMap;
+use sqonk\phext\detach\WaitGroup;
 
 function formatComment($comment)
 {
@@ -225,6 +226,7 @@ function genGlobals()
 
 function main()
 {
+  generateForClass(WaitGroup::class);
   generateForClass(BufferedChannel::class);
   generateForClass(Channel::class);
   generateForClass(Task::class);
