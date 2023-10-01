@@ -74,6 +74,17 @@ final class WaitGroup
   public function done(): void 
   {
     $this->_synchronised(function() {
+      $key = $this->id."doneIDs";
+      $doneIDs = apcu_fetch($key);
+      if (!is_array($doneIDs)) {
+        $doneIDs = [];
+      }
+      $procID = detach_pid();
+      if (in_array(haystack:$doneIDs, needle:$procID)) {
+        throw new \Exception("An individual task must not call done on the same wait group more than once.");
+      }
+      $doneIDs[] = $procID;
+      apcu_store($key, $doneIDs);
       apcu_inc($this->id);
     });
   }
